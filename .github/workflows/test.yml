@@ -1,0 +1,80 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test Action
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build action
+        run: npm run build
+
+      - name: Verify dist is up to date
+        run: |
+          if [ -n "$(git status --porcelain dist/)" ]; then
+            echo "ERROR: dist/ directory is not up to date. Run 'npm run build' and commit the changes."
+            git diff dist/
+            exit 1
+          fi
+
+  # Self-test with a sample package.json
+  self-test:
+    runs-on: ubuntu-latest
+    name: Self-Test Action
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test package.json
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "test-project",
+            "version": "1.0.0",
+            "dependencies": {
+              "lodash": "4.17.21"
+            }
+          }
+          EOF
+
+      - name: Run action
+        uses: ./
+        with:
+          api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+          fail-on-critical: false
+          fail-on-high: false
+
+      - name: Verify outputs
+        run: |
+          echo "Total packages: ${{ steps.scan.outputs.total-packages }}"
+          echo "Vulnerable packages: ${{ steps.scan.outputs.vulnerable-packages }}"
+          echo "Status: ${{ steps.scan.outputs.scan-status }}"

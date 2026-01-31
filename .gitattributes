@@ -1,0 +1,2 @@
+# GitHub Actions require dist/ to be committed
+dist/** -diff linguist-generated=true

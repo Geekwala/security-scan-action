@@ -1,0 +1,59 @@
+name: 'GeekWala Security Scan'
+description: 'Scan dependencies for vulnerabilities using GeekWala API with EPSS and KEV enrichment'
+author: 'GeekWala'
+
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  api-token:
+    description: 'GeekWala API token with scan:write ability'
+    required: true
+  file-path:
+    description: 'Path to dependency file (auto-detected if omitted)'
+    required: false
+  fail-on-critical:
+    description: 'Fail workflow if critical vulnerabilities found'
+    required: false
+    default: 'true'
+  fail-on-high:
+    description: 'Fail workflow if high severity vulnerabilities found'
+    required: false
+    default: 'false'
+  api-base-url:
+    description: 'GeekWala API base URL'
+    required: false
+    default: 'https://geekwala.com'
+  retry-attempts:
+    description: 'Number of retry attempts for transient failures'
+    required: false
+    default: '3'
+  timeout-seconds:
+    description: 'Request timeout in seconds'
+    required: false
+    default: '300'
+
+outputs:
+  total-packages:
+    description: 'Total number of packages scanned'
+  vulnerable-packages:
+    description: 'Number of packages with vulnerabilities'
+  safe-packages:
+    description: 'Number of packages without vulnerabilities'
+  critical-count:
+    description: 'Number of critical severity vulnerabilities'
+  high-count:
+    description: 'Number of high severity vulnerabilities'
+  medium-count:
+    description: 'Number of medium severity vulnerabilities'
+  low-count:
+    description: 'Number of low severity vulnerabilities'
+  scan-status:
+    description: 'Overall scan status: PASS, FAIL, or ERROR'
+  has-vulnerabilities:
+    description: 'Boolean indicating if any vulnerabilities were found'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
