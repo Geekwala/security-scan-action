@@ -30328,13 +30328,15 @@ class GeekWalaClient {
         switch (status) {
             case 401:
                 return new GeekWalaApiError(`Authentication failed. Verify your API token has 'scan:write' ability. Create a token at https://geekwala.com/dashboard/tokens`, 401, 'auth_error');
-            case 422:
+            case 422: {
                 const validationMsg = data?.error || 'Validation error';
                 return new GeekWalaApiError(`Validation error: ${validationMsg}`, 422, data?.type || 'validation_error');
-            case 429:
+            }
+            case 429: {
                 const retryAfter = error.response.headers['retry-after'];
                 const waitTime = retryAfter ? `Wait ${retryAfter} seconds` : 'Wait a few minutes';
                 return new GeekWalaApiError(`Rate limit exceeded (50 scans/hour). ${waitTime} and try again.`, 429, 'rate_limit_error');
+            }
             case 500:
             case 502:
             case 503:
@@ -30989,17 +30991,18 @@ function calculateDelay(attempt, baseMs = 1000, maxMs = 30000) {
  * Determine if an error should trigger a retry
  */
 function isRetryableError(error) {
+    const err = error;
     // Network errors
-    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND') {
+    if (err?.code === 'ECONNRESET' || err?.code === 'ETIMEDOUT' || err?.code === 'ENOTFOUND') {
         return true;
     }
     // HTTP status codes that should be retried
-    const status = error.response?.status;
+    const status = err?.response?.status;
     if (status === 429 || status === 500 || status === 502 || status === 503) {
         return true;
     }
     // Don't retry client errors or auth errors
-    if (status >= 400 && status < 500 && status !== 429) {
+    if (typeof status === 'number' && status >= 400 && status < 500 && status !== 429) {
         return false;
     }
     return false;

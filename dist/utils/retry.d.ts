@@ -14,7 +14,7 @@ export declare function calculateDelay(attempt: number, baseMs?: number, maxMs?:
 /**
  * Determine if an error should trigger a retry
  */
-export declare function isRetryableError(error: any): boolean;
+export declare function isRetryableError(error: unknown): boolean;
 /**
  * Retry a function with exponential backoff
  */

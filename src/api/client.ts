@@ -87,7 +87,7 @@ export class GeekWalaClient {
     }
 
     const status = error.response.status;
-    const data = error.response.data as any;
+    const data = error.response.data as Record<string, unknown>;
 
     switch (status) {
       case 401:
@@ -97,15 +97,16 @@ export class GeekWalaClient {
           'auth_error'
         );
 
-      case 422:
-        const validationMsg = data?.error || 'Validation error';
+      case 422: {
+        const validationMsg = (data?.error as string | undefined) || 'Validation error';
         return new GeekWalaApiError(
           `Validation error: ${validationMsg}`,
           422,
-          data?.type || 'validation_error'
+          (data?.type as string | undefined) || 'validation_error'
         );
+      }
 
-      case 429:
+      case 429: {
         const retryAfter = error.response.headers['retry-after'];
         const waitTime = retryAfter ? `Wait ${retryAfter} seconds` : 'Wait a few minutes';
         return new GeekWalaApiError(
@@ -113,6 +114,7 @@ export class GeekWalaClient {
           429,
           'rate_limit_error'
         );
+      }
 
       case 500:
       case 502:

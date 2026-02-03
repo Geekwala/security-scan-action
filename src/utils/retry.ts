@@ -21,20 +21,22 @@ export function calculateDelay(attempt: number, baseMs = 1000, maxMs = 30000): n
 /**
  * Determine if an error should trigger a retry
  */
-export function isRetryableError(error: any): boolean {
+export function isRetryableError(error: unknown): boolean {
+  const err = error as Record<string, unknown>;
+
   // Network errors
-  if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND') {
+  if (err?.code === 'ECONNRESET' || err?.code === 'ETIMEDOUT' || err?.code === 'ENOTFOUND') {
     return true;
   }
 
   // HTTP status codes that should be retried
-  const status = error.response?.status;
+  const status = (err?.response as Record<string, unknown>)?.status as number | undefined;
   if (status === 429 || status === 500 || status === 502 || status === 503) {
     return true;
   }
 
   // Don't retry client errors or auth errors
-  if (status >= 400 && status < 500 && status !== 429) {
+  if (typeof status === 'number' && status >= 400 && status < 500 && status !== 429) {
     return false;
   }
 
