@@ -67,9 +67,46 @@ jobs:
           EOF
 
       - name: Run action
+        id: scan
         uses: ./
         with:
           api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+          fail-on-critical: false
+          fail-on-high: false
+
+      - name: Verify outputs
+        run: |
+          echo "Total packages: ${{ steps.scan.outputs.total-packages }}"
+          echo "Vulnerable packages: ${{ steps.scan.outputs.vulnerable-packages }}"
+          echo "Status: ${{ steps.scan.outputs.scan-status }}"
+
+  # Test published version (as documented in README)
+  self-test-published:
+    runs-on: ubuntu-latest
+    name: Self-Test Published Action
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test package.json
+        run: |
+          cat > package.json << 'EOF'
+          {
+            "name": "test-project-published",
+            "version": "1.0.0",
+            "dependencies": {
+              "express": "4.18.2"
+            }
+          }
+          EOF
+
+      - name: Scan for vulnerabilities
+        id: scan
+        uses: geekwala/security-scan-action@v1
+        with:
+          api-token: ${{ secrets.GEEKWALA_API_TOKEN_PUBLISHED }}
           fail-on-critical: false
           fail-on-high: false
 
