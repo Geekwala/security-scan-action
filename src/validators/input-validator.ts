@@ -30,10 +30,7 @@ export function validateInputs(): ActionInputs {
     'fail-on-critical'
   );
 
-  const failOnHigh = parseBoolean(
-    core.getInput('fail-on-high') || 'false',
-    'fail-on-high'
-  );
+  const failOnHigh = parseBoolean(core.getInput('fail-on-high') || 'false', 'fail-on-high');
 
   const apiBaseUrl = core.getInput('api-base-url') || 'https://geekwala.com';
   if (!isValidUrl(apiBaseUrl)) {
@@ -95,9 +92,7 @@ function parsePositiveInteger(value: string, inputName: string): number {
   const parsed = parseInt(value, 10);
 
   if (isNaN(parsed) || parsed < 1) {
-    throw new InputValidationError(
-      `Invalid positive integer for ${inputName}: ${value}`
-    );
+    throw new InputValidationError(`Invalid positive integer for ${inputName}: ${value}`);
   }
 
   return parsed;

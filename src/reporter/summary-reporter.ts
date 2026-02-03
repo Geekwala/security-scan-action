@@ -63,15 +63,10 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
 
     for (const result of vulnerableResults) {
       const severityEmoji = getSeverityEmoji(result.severity);
-      core.summary.addHeading(
-        `${severityEmoji} ${result.package}@${result.version}`,
-        3
-      );
+      core.summary.addHeading(`${severityEmoji} ${result.package}@${result.version}`, 3);
 
       core.summary.addRaw(`**Ecosystem:** ${result.ecosystem}`).addBreak();
-      core.summary.addRaw(
-        `**Vulnerabilities:** ${result.vulnerabilities.length}`
-      ).addBreak();
+      core.summary.addRaw(`**Vulnerabilities:** ${result.vulnerabilities.length}`).addBreak();
       core.summary.addBreak();
 
       // List vulnerabilities

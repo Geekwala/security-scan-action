@@ -46,10 +46,7 @@ export function isRetryableError(error: unknown): boolean {
 /**
  * Retry a function with exponential backoff
  */
-export async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions
-): Promise<T> {
+export async function retryWithBackoff<T>(fn: () => Promise<T>, options: RetryOptions): Promise<T> {
   const {
     maxAttempts,
     baseDelayMs = 1000,

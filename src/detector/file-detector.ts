@@ -91,8 +91,6 @@ export async function readFile(filePath: string): Promise<string> {
   try {
     return await fs.readFile(filePath, 'utf-8');
   } catch (error) {
-    throw new FileNotFoundError(
-      `Failed to read file ${filePath}: ${(error as Error).message}`
-    );
+    throw new FileNotFoundError(`Failed to read file ${filePath}: ${(error as Error).message}`);
   }
 }

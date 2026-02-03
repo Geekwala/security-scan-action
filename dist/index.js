@@ -30281,9 +30281,9 @@ class GeekWalaClient {
             baseURL: baseUrl,
             timeout: timeoutSeconds * 1000,
             headers: {
-                'Authorization': `Bearer ${apiToken}`,
+                Authorization: `Bearer ${apiToken}`,
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'User-Agent': 'GeekWala-GitHub-Action/1.0.0',
             },
         });

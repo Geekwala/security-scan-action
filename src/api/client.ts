@@ -26,9 +26,9 @@ export class GeekWalaClient {
       baseURL: baseUrl,
       timeout: timeoutSeconds * 1000,
       headers: {
-        'Authorization': `Bearer ${apiToken}`,
+        Authorization: `Bearer ${apiToken}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'User-Agent': 'GeekWala-GitHub-Action/1.0.0',
       },
     });
@@ -54,13 +54,10 @@ export class GeekWalaClient {
 
     const scanRequest = async () => {
       try {
-        const response = await this.client.post<ApiResponse>(
-          '/api/v1/vulnerability-scan/run',
-          {
-            file_name: fileName,
-            content: content,
-          }
-        );
+        const response = await this.client.post<ApiResponse>('/api/v1/vulnerability-scan/run', {
+          file_name: fileName,
+          content: content,
+        });
 
         return response.data;
       } catch (error) {
