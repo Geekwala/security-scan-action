@@ -8,3 +8,4 @@ coverage/
 *.swp
 *.swo
 lib/
+*.d.ts.map
