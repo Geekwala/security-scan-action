@@ -627,6 +627,15 @@ describe('Table Reporter', () => {
       expect(core.info).toHaveBeenCalledTimes(1);
     });
 
+    it('should return early when response.data is undefined', () => {
+      const response: ApiResponse = {
+        success: true,
+      } as ApiResponse;
+
+      generateTableOutput(response);
+      expect(core.info).not.toHaveBeenCalled();
+    });
+
     it('should handle results with no affected packages', () => {
       const noAffectedResponse: ApiResponse = {
         success: true,

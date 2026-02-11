@@ -40112,7 +40112,7 @@ async function validateFile(filePath) {
 /**
  * Read file content with size guard to prevent OOM on large files
  */
-async function readFile(filePath, maxSizeBytes = 500 * 1024) {
+async function readFile(filePath, maxSizeBytes = 512 * 1024) {
     try {
         const stats = await fs.stat(filePath);
         if (stats.size > maxSizeBytes) {
@@ -41156,6 +41156,7 @@ function generateSarif(response, fileName) {
                 const properties = {};
                 if (vuln.epss_score != null)
                     properties['geekwala/epss-score'] = vuln.epss_score;
+                // Keep 'geekwala/is-kev' property name for backward compatibility with existing SARIF consumers
                 if (vuln.is_known_exploited != null)
                     properties['geekwala/is-kev'] = vuln.is_known_exploited;
                 if (vuln.fix_version != null)

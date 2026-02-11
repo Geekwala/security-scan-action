@@ -326,6 +326,65 @@ describe('GeekWalaClient Integration', () => {
     });
   });
 
+  describe('Response Validation', () => {
+    it('should throw when success=true but summary is malformed', async () => {
+      nock(TEST_BASE_URL)
+        .post('/api/v1/vulnerability-scan/run')
+        .reply(200, {
+          success: true,
+          data: {
+            summary: { total_packages: 'not-a-number' },
+            results: [],
+          },
+        });
+
+      const client = new GeekWalaClient(TEST_TOKEN, TEST_BASE_URL, 300, 1);
+
+      await expect(client.runScan('package.json', '{}')).rejects.toThrow(
+        /Invalid API response: missing or malformed summary/
+      );
+    });
+
+    it('should throw when success=true but results is not an array', async () => {
+      nock(TEST_BASE_URL)
+        .post('/api/v1/vulnerability-scan/run')
+        .reply(200, {
+          success: true,
+          data: {
+            summary: { total_packages: 1, vulnerable_packages: 0, safe_packages: 1 },
+            results: 'not-an-array',
+          },
+        });
+
+      const client = new GeekWalaClient(TEST_TOKEN, TEST_BASE_URL, 300, 1);
+
+      await expect(client.runScan('package.json', '{}')).rejects.toThrow(
+        /Invalid API response: missing results array/
+      );
+    });
+  });
+
+  describe('Unrecognized HTTP Status Codes', () => {
+    it('should handle unrecognized status code (418)', async () => {
+      nock(TEST_BASE_URL)
+        .post('/api/v1/vulnerability-scan/run')
+        .reply(418, { error: 'I am a teapot' });
+
+      const client = new GeekWalaClient(TEST_TOKEN, TEST_BASE_URL, 300, 1);
+
+      try {
+        await client.runScan('package.json', '{}');
+        fail('Should have thrown GeekWalaApiError');
+      } catch (error) {
+        expect(error).toBeInstanceOf(GeekWalaApiError);
+        expect((error as GeekWalaApiError).statusCode).toBe(418);
+        expect((error as Error).message).toContain('API error (418)');
+        expect((error as Error).message).toContain('I am a teapot');
+      }
+    });
+
+  });
+
   describe('HTTP Headers', () => {
     it('should send correct authorization header', async () => {
       const mockApi = new MockGeekWalaApi(TEST_BASE_URL);

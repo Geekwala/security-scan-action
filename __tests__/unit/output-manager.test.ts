@@ -609,4 +609,53 @@ describe('checkFailureThresholds', () => {
       expect(result.reasons).toContain('Found 2 vulnerabilities with EPSS score at or above 0.5');
     });
   });
+
+  describe('undefined vulnerabilities array', () => {
+    it('should handle result with undefined vulnerabilities in setActionOutputs', () => {
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          results: [
+            {
+              ecosystem: 'npm',
+              package: 'pkg',
+              version: '1.0.0',
+              affected: false,
+              severity: 'NONE',
+            } as any,
+          ],
+          summary: { total_packages: 1, vulnerable_packages: 0, safe_packages: 1 },
+        },
+      };
+
+      setActionOutputs(response);
+
+      expect(core.setOutput).toHaveBeenCalledWith('critical-count', '0');
+      expect(core.setOutput).toHaveBeenCalledWith('has-vulnerabilities', 'false');
+    });
+
+    it('should handle result with undefined vulnerabilities in checkFailureThresholds', () => {
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          results: [
+            {
+              ecosystem: 'npm',
+              package: 'pkg',
+              version: '1.0.0',
+              affected: false,
+              severity: 'NONE',
+            } as any,
+          ],
+          summary: { total_packages: 1, vulnerable_packages: 0, safe_packages: 1 },
+        },
+      };
+      const inputs = makeInputs({ severityThreshold: 'critical' });
+
+      const result = checkFailureThresholds(response, inputs);
+
+      expect(result.shouldFail).toBe(false);
+      expect(result.status).toBe('PASS');
+    });
+  });
 });

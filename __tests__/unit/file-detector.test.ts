@@ -73,4 +73,16 @@ describe('File Detection', () => {
       expect(files).toContain('*.csproj');
     });
   });
+
+  describe('getFilePriority edge cases', () => {
+    it('should return 16 for .csproj files', () => {
+      expect(getFilePriority('MyProject.csproj')).toBe(16);
+      expect(getFilePriority('Web.csproj')).toBe(16);
+    });
+
+    it('should return 999 for unknown files', () => {
+      expect(getFilePriority('unknown-file.xyz')).toBe(999);
+      expect(getFilePriority('README.md')).toBe(999);
+    });
+  });
 });

@@ -157,4 +157,156 @@ describe('SARIF Generator', () => {
     const location = sarif.runs[0].results[0].locations[0];
     expect(location.physicalLocation.artifactLocation.uri).toBe('package.json');
   });
+
+  describe('severityToScore fallback when cvss_score is null', () => {
+    it('should use 9.0 for CRITICAL severity without cvss_score', () => {
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          summary: { total_packages: 1, vulnerable_packages: 1, safe_packages: 0 },
+          results: [{
+            ecosystem: 'npm',
+            package: 'pkg',
+            version: '1.0.0',
+            affected: true,
+            severity: 'CRITICAL',
+            vulnerabilities: [{
+              id: 'CVE-CRIT',
+              summary: 'Critical without CVSS',
+              severity: [{ type: 'CVSS_V3', score: '9.5' }],
+            }],
+          }],
+        },
+      };
+
+      const sarif = generateSarif(response, 'package.json');
+      expect(sarif.runs[0].tool.driver.rules[0].properties!['security-severity']).toBe('9.0');
+    });
+
+    it('should use 7.0 for HIGH severity without cvss_score', () => {
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          summary: { total_packages: 1, vulnerable_packages: 1, safe_packages: 0 },
+          results: [{
+            ecosystem: 'npm',
+            package: 'pkg',
+            version: '1.0.0',
+            affected: true,
+            severity: 'HIGH',
+            vulnerabilities: [{
+              id: 'CVE-HIGH',
+              summary: 'High without CVSS',
+              severity: [{ type: 'CVSS_V3', score: '7.5' }],
+            }],
+          }],
+        },
+      };
+
+      const sarif = generateSarif(response, 'package.json');
+      expect(sarif.runs[0].tool.driver.rules[0].properties!['security-severity']).toBe('7.0');
+    });
+
+    it('should use 4.0 for MEDIUM severity without cvss_score', () => {
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          summary: { total_packages: 1, vulnerable_packages: 1, safe_packages: 0 },
+          results: [{
+            ecosystem: 'npm',
+            package: 'pkg',
+            version: '1.0.0',
+            affected: true,
+            severity: 'MEDIUM',
+            vulnerabilities: [{
+              id: 'CVE-MED',
+              summary: 'Medium without CVSS',
+              severity: [{ type: 'CVSS_V3', score: '5.0' }],
+            }],
+          }],
+        },
+      };
+
+      const sarif = generateSarif(response, 'package.json');
+      expect(sarif.runs[0].tool.driver.rules[0].properties!['security-severity']).toBe('4.0');
+    });
+
+    it('should use 1.0 for LOW severity without cvss_score', () => {
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          summary: { total_packages: 1, vulnerable_packages: 1, safe_packages: 0 },
+          results: [{
+            ecosystem: 'npm',
+            package: 'pkg',
+            version: '1.0.0',
+            affected: true,
+            severity: 'LOW',
+            vulnerabilities: [{
+              id: 'CVE-LOW',
+              summary: 'Low without CVSS',
+              severity: [{ type: 'CVSS_V3', score: '2.0' }],
+            }],
+          }],
+        },
+      };
+
+      const sarif = generateSarif(response, 'package.json');
+      expect(sarif.runs[0].tool.driver.rules[0].properties!['security-severity']).toBe('1.0');
+    });
+  });
+
+  it('should include fullDescription when vuln.details is present', () => {
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        summary: { total_packages: 1, vulnerable_packages: 1, safe_packages: 0 },
+        results: [{
+          ecosystem: 'npm',
+          package: 'pkg',
+          version: '1.0.0',
+          affected: true,
+          severity: 'HIGH',
+          vulnerabilities: [{
+            id: 'CVE-DETAILS',
+            summary: 'Vuln with details',
+            details: 'This is a detailed description of the vulnerability.',
+            cvss_score: 8.0,
+          }],
+        }],
+      },
+    };
+
+    const sarif = generateSarif(response, 'package.json');
+    expect(sarif.runs[0].tool.driver.rules[0].fullDescription).toEqual({
+      text: 'This is a detailed description of the vulnerability.',
+    });
+  });
+
+  it('should include helpUri when references contain WEB or ADVISORY type', () => {
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        summary: { total_packages: 1, vulnerable_packages: 1, safe_packages: 0 },
+        results: [{
+          ecosystem: 'npm',
+          package: 'pkg',
+          version: '1.0.0',
+          affected: true,
+          severity: 'HIGH',
+          vulnerabilities: [{
+            id: 'CVE-REF',
+            summary: 'Vuln with reference',
+            cvss_score: 7.5,
+            references: [
+              { type: 'ADVISORY', url: 'https://example.com/advisory/CVE-REF' },
+            ],
+          }],
+        }],
+      },
+    };
+
+    const sarif = generateSarif(response, 'package.json');
+    expect(sarif.runs[0].tool.driver.rules[0].helpUri).toBe('https://example.com/advisory/CVE-REF');
+  });
 });

@@ -98,4 +98,16 @@ describe('Apply Ignores', () => {
     expect(ignoredCount).toBe(0);
     expect(results[0].vulnerabilities[0]._ignored).toBeUndefined();
   });
+
+  it('should use fallback reason "Ignored" when reason is empty string', () => {
+    const config: IgnoreConfig = {
+      ignore: [{ id: 'CVE-2021-23337', reason: '' }],
+    };
+
+    const { results, ignoredCount } = applyIgnores(makeResults(), config);
+
+    expect(ignoredCount).toBe(1);
+    expect(results[0].vulnerabilities[0]._ignored).toBe(true);
+    expect(results[0].vulnerabilities[0]._ignoreReason).toBe('Ignored');
+  });
 });
