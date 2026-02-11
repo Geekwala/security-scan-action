@@ -99,7 +99,7 @@ export function checkFailureThresholds(
 
   // Check KEV gate
   if (inputs.failOnKev) {
-    const kevVulns = gatedVulns.filter(v => v.is_kev === true);
+    const kevVulns = gatedVulns.filter(v => v.is_known_exploited === true);
     if (kevVulns.length > 0) {
       reasons.push(
         `Found ${kevVulns.length} CISA Known Exploited ${pluralizeVulnerabilities(kevVulns.length)}`

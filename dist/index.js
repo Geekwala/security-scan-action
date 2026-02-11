@@ -39896,8 +39896,8 @@ class GeekWalaClient {
      * Run a vulnerability scan
      */
     async runScan(fileName, content) {
-        // Validate file size client-side (500KB limit for authenticated users)
-        const maxSizeKb = 500;
+        // Validate file size client-side (512KB limit for authenticated users)
+        const maxSizeKb = 512;
         const contentSizeKb = Buffer.byteLength(content, 'utf-8') / 1024;
         if (contentSizeKb > maxSizeKb) {
             throw new GeekWalaApiError(`File size (${contentSizeKb.toFixed(2)}KB) exceeds maximum allowed size (${maxSizeKb}KB)`, 400, 'file_size_error');
@@ -39955,7 +39955,7 @@ class GeekWalaClient {
             : {};
         switch (status) {
             case 401:
-                return new GeekWalaApiError(`Authentication failed. Verify your API token has 'scan:write' ability. Create a token at https://geekwala.com/dashboard/tokens`, 401, 'auth_error');
+                return new GeekWalaApiError(`Authentication failed. Verify your API token has 'scan:write' ability. Create a token at https://geekwala.com/developers/api-tokens`, 401, 'auth_error');
             case 422: {
                 const validationMsg = String(data?.error || 'Validation error');
                 return new GeekWalaApiError(`Validation error: ${validationMsg}`, 422, String(data?.type || 'validation_error'));
@@ -40556,7 +40556,7 @@ function generateJsonReport(response, fileName, scanDurationMs) {
                     summary: vuln.summary,
                     cvss_score: vuln.cvss_score,
                     epss_score: vuln.epss_score,
-                    is_kev: vuln.is_kev,
+                    is_known_exploited: vuln.is_known_exploited,
                     fix_version: vuln.fix_version,
                     ignored: vuln._ignored || false,
                     ignoreReason: vuln._ignoreReason,
@@ -40695,7 +40695,7 @@ function checkFailureThresholds(response, inputs) {
     }
     // Check KEV gate
     if (inputs.failOnKev) {
-        const kevVulns = gatedVulns.filter(v => v.is_kev === true);
+        const kevVulns = gatedVulns.filter(v => v.is_known_exploited === true);
         if (kevVulns.length > 0) {
             reasons.push(`Found ${kevVulns.length} CISA Known Exploited ${(0, format_1.pluralizeVulnerabilities)(kevVulns.length)}`);
         }
@@ -40843,7 +40843,7 @@ async function generateSummary(response, fileName) {
                 if (vuln.epss_score != null) {
                     enrichmentData.push(`EPSS: ${(vuln.epss_score * 100).toFixed(2)}%`);
                 }
-                if (vuln.is_kev) {
+                if (vuln.is_known_exploited) {
                     enrichmentData.push('⚡ CISA KEV');
                 }
                 if (enrichmentData.length > 0) {
@@ -40947,8 +40947,8 @@ const severity_1 = __nccwpck_require__(5278);
 function sortByRisk(vulns) {
     return [...vulns].sort((a, b) => {
         // KEV first
-        const aKev = a.vuln.is_kev ? 1 : 0;
-        const bKev = b.vuln.is_kev ? 1 : 0;
+        const aKev = a.vuln.is_known_exploited ? 1 : 0;
+        const bKev = b.vuln.is_known_exploited ? 1 : 0;
         if (bKev !== aKev)
             return bKev - aKev;
         // EPSS desc
@@ -41014,7 +41014,7 @@ function generateTableOutput(response) {
         const epss = entry.vuln.epss_score != null
             ? `${(entry.vuln.epss_score * 100).toFixed(1)}%`
             : '-';
-        const kev = entry.vuln.is_kev ? 'YES' : '-';
+        const kev = entry.vuln.is_known_exploited ? 'YES' : '-';
         const fix = entry.vuln.fix_version || '-';
         const line = entry.pkg.padEnd(cols.pkg) + '  ' +
             entry.version.padEnd(cols.ver) + '  ' +
@@ -41156,8 +41156,8 @@ function generateSarif(response, fileName) {
                 const properties = {};
                 if (vuln.epss_score != null)
                     properties['geekwala/epss-score'] = vuln.epss_score;
-                if (vuln.is_kev != null)
-                    properties['geekwala/is-kev'] = vuln.is_kev;
+                if (vuln.is_known_exploited != null)
+                    properties['geekwala/is-kev'] = vuln.is_known_exploited;
                 if (vuln.fix_version != null)
                     properties['geekwala/fix-version'] = vuln.fix_version;
                 results.push({
@@ -41273,13 +41273,13 @@ function handleError(error) {
     if (error instanceof file_detector_1.FileSizeError) {
         core.setFailed(error.message);
         core.setOutput('scan-status', 'ERROR');
-        core.error('💡 Tip: The file size limit is 500KB. For large lockfiles, consider scanning the manifest instead.');
+        core.error('💡 Tip: The file size limit is 512KB. For large lockfiles, consider scanning the manifest instead.');
     }
     else if (error instanceof client_1.GeekWalaApiError) {
         core.setFailed(error.message);
         core.setOutput('scan-status', 'ERROR');
         if (error.type === 'auth_error') {
-            core.error('💡 Tip: Verify your API token at https://geekwala.com/dashboard/tokens');
+            core.error('💡 Tip: Verify your API token at https://geekwala.com/developers/api-tokens');
         }
         else if (error.type === 'rate_limit_error') {
             core.error('💡 Tip: Consider spacing out your scans or upgrading your plan');

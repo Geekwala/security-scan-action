@@ -337,7 +337,7 @@ describe('checkFailureThresholds', () => {
       const response = makeResponse([
         makeScanResult([
           makeVuln({
-            is_kev: true,
+            is_known_exploited: true,
             kev_date_added: '2024-01-15',
           }),
         ]),
@@ -355,7 +355,7 @@ describe('checkFailureThresholds', () => {
       const response = makeResponse([
         makeScanResult([
           makeVuln({
-            is_kev: true,
+            is_known_exploited: true,
             _ignored: true,
           }),
         ]),
@@ -556,7 +556,7 @@ describe('checkFailureThresholds', () => {
         makeScanResult([
           makeVuln({
             severity: [{ type: 'CVSS_V3', score: '9.5' }],
-            is_kev: true,
+            is_known_exploited: true,
             epss_score: 0.8,
           }),
         ]),
@@ -585,13 +585,13 @@ describe('checkFailureThresholds', () => {
           makeVuln({
             id: 'GHSA-1',
             severity: [{ type: 'CVSS_V3', score: '9.5' }],
-            is_kev: true,
+            is_known_exploited: true,
             epss_score: 0.8,
           }),
           makeVuln({
             id: 'GHSA-2',
             severity: [{ type: 'CVSS_V3', score: '9.0' }],
-            is_kev: true,
+            is_known_exploited: true,
             epss_score: 0.9,
           }),
         ]),

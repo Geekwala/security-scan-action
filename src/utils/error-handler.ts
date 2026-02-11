@@ -14,14 +14,14 @@ export function handleError(error: unknown): void {
     core.setFailed(error.message);
     core.setOutput('scan-status', 'ERROR');
     core.error(
-      '💡 Tip: The file size limit is 500KB. For large lockfiles, consider scanning the manifest instead.'
+      '💡 Tip: The file size limit is 512KB. For large lockfiles, consider scanning the manifest instead.'
     );
   } else if (error instanceof GeekWalaApiError) {
     core.setFailed(error.message);
     core.setOutput('scan-status', 'ERROR');
 
     if (error.type === 'auth_error') {
-      core.error('💡 Tip: Verify your API token at https://geekwala.com/dashboard/tokens');
+      core.error('💡 Tip: Verify your API token at https://geekwala.com/developers/api-tokens');
     } else if (error.type === 'rate_limit_error') {
       core.error('💡 Tip: Consider spacing out your scans or upgrading your plan');
     } else if (error.type === 'validation_error') {

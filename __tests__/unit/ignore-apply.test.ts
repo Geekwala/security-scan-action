@@ -21,7 +21,7 @@ describe('Apply Ignores', () => {
           aliases: ['GHSA-35jh-r3h4-6jhm'],
           cvss_score: 7.2,
           epss_score: 0.00234,
-          is_kev: false,
+          is_known_exploited: false,
         },
         {
           id: 'CVE-2020-28500',

@@ -20,7 +20,7 @@ export interface Vulnerability {
   severity?: VulnerabilitySeverity[];
   epss_score?: number | null;
   epss_percentile?: number | null;
-  is_kev?: boolean;
+  is_known_exploited?: boolean;
   kev_date_added?: string | null;
   cvss_score?: number | null;
   fix_version?: string | null;

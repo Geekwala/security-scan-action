@@ -102,7 +102,7 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
           enrichmentData.push(`EPSS: ${(vuln.epss_score * 100).toFixed(2)}%`);
         }
 
-        if (vuln.is_kev) {
+        if (vuln.is_known_exploited) {
           enrichmentData.push('⚡ CISA KEV');
         }
 

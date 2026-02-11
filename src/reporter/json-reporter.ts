@@ -27,7 +27,7 @@ export interface JsonReport {
     summary?: string;
     cvss_score?: number | null;
     epss_score?: number | null;
-    is_kev?: boolean;
+    is_known_exploited?: boolean;
     fix_version?: string | null;
     ignored: boolean;
     ignoreReason?: string;
@@ -62,7 +62,7 @@ export function generateJsonReport(
           summary: vuln.summary,
           cvss_score: vuln.cvss_score,
           epss_score: vuln.epss_score,
-          is_kev: vuln.is_kev,
+          is_known_exploited: vuln.is_known_exploited,
           fix_version: vuln.fix_version,
           ignored: vuln._ignored || false,
           ignoreReason: vuln._ignoreReason,

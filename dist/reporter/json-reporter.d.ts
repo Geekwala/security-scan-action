@@ -22,7 +22,7 @@ export interface JsonReport {
         summary?: string;
         cvss_score?: number | null;
         epss_score?: number | null;
-        is_kev?: boolean;
+        is_known_exploited?: boolean;
         fix_version?: string | null;
         ignored: boolean;
         ignoreReason?: string;

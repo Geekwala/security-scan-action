@@ -43,8 +43,8 @@ export class GeekWalaClient {
    * Run a vulnerability scan
    */
   async runScan(fileName: string, content: string): Promise<ApiResponse> {
-    // Validate file size client-side (500KB limit for authenticated users)
-    const maxSizeKb = 500;
+    // Validate file size client-side (512KB limit for authenticated users)
+    const maxSizeKb = 512;
     const contentSizeKb = Buffer.byteLength(content, 'utf-8') / 1024;
 
     if (contentSizeKb > maxSizeKb) {
@@ -123,7 +123,7 @@ export class GeekWalaClient {
     switch (status) {
       case 401:
         return new GeekWalaApiError(
-          `Authentication failed. Verify your API token has 'scan:write' ability. Create a token at https://geekwala.com/dashboard/tokens`,
+          `Authentication failed. Verify your API token has 'scan:write' ability. Create a token at https://geekwala.com/developers/api-tokens`,
           401,
           'auth_error'
         );

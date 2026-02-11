@@ -61,7 +61,7 @@ describe('GeekWalaClient Integration', () => {
       expect(vuln?.id).toBe('CVE-2021-23337');
       expect(vuln?.summary).toContain('Command injection');
       expect(vuln?.epss_score).toBe(0.00234);
-      expect(vuln?.is_kev).toBe(false);
+      expect(vuln?.is_known_exploited).toBe(false);
       expect(vuln?.cvss_score).toBe(7.2);
       expect(mockApi.isDone()).toBe(true);
     });
@@ -79,7 +79,7 @@ describe('GeekWalaClient Integration', () => {
       const vulnPackage = result.data?.results[0];
       expect(vulnPackage).toBeDefined();
       expect(vulnPackage?.severity).toBe('CRITICAL');
-      expect(vulnPackage?.vulnerabilities[0].is_kev).toBe(true);
+      expect(vulnPackage?.vulnerabilities[0].is_known_exploited).toBe(true);
       expect(vulnPackage?.vulnerabilities[0].cvss_score).toBe(10.0);
       expect(vulnPackage?.vulnerabilities[0].epss_score).toBeGreaterThan(0.9);
     });
@@ -107,7 +107,7 @@ describe('GeekWalaClient Integration', () => {
       expect(vuln?.epss_score).toBeNull();
       expect(vuln?.epss_percentile).toBeNull();
       expect(vuln?.cvss_score).toBeNull();
-      expect(vuln?.is_kev).toBe(false);
+      expect(vuln?.is_known_exploited).toBe(false);
     });
 
     it('should handle unknown severity levels', async () => {
@@ -280,7 +280,7 @@ describe('GeekWalaClient Integration', () => {
   });
 
   describe('File Size Validation', () => {
-    it('should reject files exceeding 500KB', async () => {
+    it('should reject files exceeding 512KB', async () => {
       const client = new GeekWalaClient(TEST_TOKEN, TEST_BASE_URL, 300, 3);
 
       try {
@@ -289,11 +289,11 @@ describe('GeekWalaClient Integration', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(GeekWalaApiError);
         expect((error as Error).message).toContain('exceeds maximum allowed size');
-        expect((error as Error).message).toContain('500KB');
+        expect((error as Error).message).toContain('512KB');
       }
     });
 
-    it('should accept files under 500KB', async () => {
+    it('should accept files under 512KB', async () => {
       const mockApi = new MockGeekWalaApi(TEST_BASE_URL);
       mockApi.mockSuccessfulScan(fixtures.cleanScanResponse);
 
@@ -305,8 +305,8 @@ describe('GeekWalaClient Integration', () => {
 
     it('should calculate file size correctly', async () => {
       const mockApi = new MockGeekWalaApi(TEST_BASE_URL);
-      // Test exact boundary (500KB)
-      const exactLimit = 'x'.repeat(500 * 1024);
+      // Test exact boundary (512KB)
+      const exactLimit = 'x'.repeat(512 * 1024);
       mockApi.mockSuccessfulScan(fixtures.cleanScanResponse);
 
       const client = new GeekWalaClient(TEST_TOKEN, TEST_BASE_URL, 300, 3);
@@ -314,11 +314,11 @@ describe('GeekWalaClient Integration', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should reject files just over 500KB', async () => {
+    it('should reject files just over 512KB', async () => {
       const client = new GeekWalaClient(TEST_TOKEN, TEST_BASE_URL, 300, 3);
 
-      // 500KB + 1 byte
-      const justOverLimit = 'x'.repeat(500 * 1024 + 1);
+      // 512KB + 1 byte
+      const justOverLimit = 'x'.repeat(512 * 1024 + 1);
 
       await expect(client.runScan('package.json', justOverLimit)).rejects.toThrow(
         /exceeds maximum allowed size/

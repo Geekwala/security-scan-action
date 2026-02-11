@@ -16,13 +16,13 @@ describe('handleError', () => {
 
   describe('FileSizeError handling', () => {
     it('should handle file size errors with tip', () => {
-      const error = new FileSizeError('File is 501KB, exceeds maximum allowed size of 500KB');
+      const error = new FileSizeError('File is 513KB, exceeds maximum allowed size of 512KB');
       handleError(error);
 
       expect(core.setFailed).toHaveBeenCalledWith(error.message);
       expect(core.setOutput).toHaveBeenCalledWith('scan-status', 'ERROR');
       expect(core.error).toHaveBeenCalledWith(
-        expect.stringContaining('500KB')
+        expect.stringContaining('512KB')
       );
     });
   });

@@ -12,8 +12,8 @@ import { getVulnerabilitySeverity } from '../utils/severity';
 function sortByRisk(vulns: Array<{ vuln: Vulnerability; pkg: string; version: string; ecosystem: string }>): typeof vulns {
   return [...vulns].sort((a, b) => {
     // KEV first
-    const aKev = a.vuln.is_kev ? 1 : 0;
-    const bKev = b.vuln.is_kev ? 1 : 0;
+    const aKev = a.vuln.is_known_exploited ? 1 : 0;
+    const bKev = b.vuln.is_known_exploited ? 1 : 0;
     if (bKev !== aKev) return bKev - aKev;
 
     // EPSS desc
@@ -87,7 +87,7 @@ export function generateTableOutput(response: ApiResponse): void {
     const epss = entry.vuln.epss_score != null
       ? `${(entry.vuln.epss_score * 100).toFixed(1)}%`
       : '-';
-    const kev = entry.vuln.is_kev ? 'YES' : '-';
+    const kev = entry.vuln.is_known_exploited ? 'YES' : '-';
     const fix = entry.vuln.fix_version || '-';
 
     const line =

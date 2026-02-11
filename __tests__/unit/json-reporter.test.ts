@@ -59,7 +59,7 @@ describe('JSON Report Generator', () => {
     expect(vuln.summary).toBe('Command injection in lodash');
     expect(vuln.cvss_score).toBe(7.2);
     expect(vuln.epss_score).toBe(0.00234);
-    expect(vuln.is_kev).toBe(false);
+    expect(vuln.is_known_exploited).toBe(false);
     expect(vuln.ignored).toBe(false);
     expect(vuln.ignoreReason).toBeUndefined();
   });
@@ -75,7 +75,7 @@ describe('JSON Report Generator', () => {
     expect(vuln.severity).toBe('CRITICAL');
     expect(vuln.cvss_score).toBe(10.0);
     expect(vuln.epss_score).toBe(0.97534);
-    expect(vuln.is_kev).toBe(true);
+    expect(vuln.is_known_exploited).toBe(true);
   });
 
   it('should handle missing enrichment data gracefully', () => {
@@ -87,7 +87,7 @@ describe('JSON Report Generator', () => {
     expect(vuln.id).toBe('CVE-2024-9999');
     expect(vuln.cvss_score).toBeNull();
     expect(vuln.epss_score).toBeNull();
-    expect(vuln.is_kev).toBe(false);
+    expect(vuln.is_known_exploited).toBe(false);
     expect(vuln.fix_version).toBeUndefined();
   });
 

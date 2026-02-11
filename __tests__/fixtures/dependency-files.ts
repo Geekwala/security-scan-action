@@ -97,11 +97,11 @@ require (
 `;
 
 /**
- * Large file content (501KB - exceeds 500KB limit)
+ * Large file content (513KB - exceeds 512KB limit)
  */
-export const largeFileContent = 'x'.repeat(501 * 1024);
+export const largeFileContent = 'x'.repeat(513 * 1024);
 
 /**
- * Valid large file (499KB - under limit)
+ * Valid large file (511KB - under limit)
  */
-export const validLargeFileContent = 'x'.repeat(499 * 1024);
+export const validLargeFileContent = 'x'.repeat(511 * 1024);
