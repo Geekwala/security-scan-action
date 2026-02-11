@@ -14,7 +14,7 @@ export declare function detectDependencyFile(workspaceDir?: string): Promise<str
  */
 export declare function validateFile(filePath: string): Promise<void>;
 /**
- * Read file content
+ * Read file content with size guard to prevent OOM on large files
  */
-export declare function readFile(filePath: string): Promise<string>;
+export declare function readFile(filePath: string, maxSizeBytes?: number): Promise<string>;
 //# sourceMappingURL=file-detector.d.ts.map

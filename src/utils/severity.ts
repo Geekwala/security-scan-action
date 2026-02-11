@@ -2,6 +2,7 @@
  * Severity classification utilities
  */
 
+import * as core from '@actions/core';
 import { Vulnerability, SeverityCounts } from '../api/types';
 
 /**
@@ -34,18 +35,25 @@ export function getSeverityFromCvss(score: number): string {
  */
 export function getVulnerabilitySeverity(vuln: Vulnerability): string {
   // Use CVSS score if available
-  if (vuln.cvss_score !== undefined && vuln.cvss_score !== null) {
+  if (vuln.cvss_score != null) {
     return getSeverityFromCvss(vuln.cvss_score);
   }
 
-  // Parse severity array
+  // Parse severity array — try all entries for a numeric score
   if (vuln.severity && vuln.severity.length > 0) {
-    const cvssV3 = vuln.severity.find(s => s.type === 'CVSS_V3');
-    if (cvssV3) {
-      const score = parseFloat(cvssV3.score);
+    for (const entry of vuln.severity) {
+      const score = parseFloat(entry.score);
       if (!isNaN(score)) {
         return getSeverityFromCvss(score);
       }
+    }
+
+    // No numeric score found — check if vector strings were present
+    const hasVectorString = vuln.severity.some(s => s.score.startsWith('CVSS:'));
+    if (hasVectorString) {
+      core.warning(
+        `Vulnerability ${vuln.id}: CVSS vector string found but no numeric score available. Severity classified as UNKNOWN.`
+      );
     }
   }
 

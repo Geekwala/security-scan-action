@@ -2,6 +2,8 @@
  * TypeScript interfaces for GeekWala API
  */
 
+export type SeverityThreshold = 'none' | 'low' | 'medium' | 'high' | 'critical';
+
 export interface VulnerabilitySeverity {
   type: string;
   score: string;
@@ -21,6 +23,10 @@ export interface Vulnerability {
   is_kev?: boolean;
   kev_date_added?: string | null;
   cvss_score?: number | null;
+  fix_version?: string | null;
+  cwe_ids?: string[];
+  _ignored?: boolean;
+  _ignoreReason?: string;
 }
 
 export interface ScanResult {
@@ -53,6 +59,14 @@ export interface ActionInputs {
   filePath?: string;
   failOnCritical: boolean;
   failOnHigh: boolean;
+  severityThreshold: SeverityThreshold;
+  failOnKev: boolean;
+  epssThreshold?: number;
+  onlyFixed: boolean;
+  sarifFile?: string;
+  ignoreFile?: string;
+  outputFormat: string[];
+  jsonFile?: string;
   apiBaseUrl: string;
   retryAttempts: number;
   timeoutSeconds: number;

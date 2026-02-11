@@ -5,7 +5,7 @@ export interface RetryOptions {
     maxAttempts: number;
     baseDelayMs?: number;
     maxDelayMs?: number;
-    shouldRetry?: (error: Error) => boolean;
+    shouldRetry?: (error: unknown) => boolean;
 }
 /**
  * Calculate delay with exponential backoff and jitter

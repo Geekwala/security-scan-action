@@ -1,49 +1,49 @@
 # GeekWala Security Scan Action
 
 [![Test](https://github.com/Geekwala/security-scan-action/actions/workflows/test.yml/badge.svg)](https://github.com/Geekwala/security-scan-action/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/badge/coverage-85%25+-brightgreen.svg)](https://github.com/Geekwala/security-scan-action)
 [![GitHub Marketplace](https://img.shields.io/badge/Marketplace-GeekWala%20Security%20Scan-blue.svg)](https://github.com/marketplace/actions/geekwala-security-scan)
 
-GitHub Action to scan your dependencies for known vulnerabilities using the [GeekWala](https://geekwala.com) API, enriched with EPSS (Exploit Prediction Scoring System) and CISA KEV (Known Exploited Vulnerabilities) data.
+GitHub Action to scan your dependencies for known vulnerabilities using the [GeekWala](https://geekwala.com) API, enriched with **EPSS** (Exploit Prediction Scoring System) and **CISA KEV** (Known Exploited Vulnerabilities) data.
 
-## Features
+## Why GeekWala?
 
-- 🔍 **Auto-detects dependency files** - Automatically finds and scans lockfiles and manifests
-- 🛡️ **Multi-ecosystem support** - npm, PyPI, Maven, Packagist, Go, Rust, Ruby, NuGet
-- 📊 **Rich workflow summaries** - Detailed vulnerability reports with CVSS, EPSS, and KEV data
-- ⚡ **Fast and reliable** - Exponential backoff retry logic for transient failures
-- 🎯 **Configurable thresholds** - Fail builds on critical or high severity vulnerabilities
-- 📦 **Prioritizes lockfiles** - Scans `package-lock.json` before `package.json` for accuracy
+| Feature | GeekWala | Trivy | Grype | Snyk |
+|---------|----------|-------|-------|------|
+| EPSS scores | Native | No | No | No |
+| CISA KEV flags | Native | Partial | No | No |
+| Fail on exploited vulns (`fail-on-kev`) | Yes | No | No | No |
+| EPSS-based gates (`epss-threshold`) | Yes | No | No | No |
+| SARIF output | Yes | Yes | Yes | Yes |
+| Vulnerability suppression | Yes | Yes | Yes | Yes |
+| Free tier | Yes | Yes | Yes | Limited |
+
+**GeekWala's unique edge**: Native EPSS + CISA KEV enrichment with actionable CI/CD gates. Fail on actually-exploited vulnerabilities, not just CVSS scores.
 
 ## Quick Start
 
 ```yaml
-name: Security Scan
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
-jobs:
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Scan for vulnerabilities
-        uses: geekwala/security-scan-action@v1
-        with:
-          api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+- uses: geekwala/security-scan-action@v1
+  with:
+    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
 ```
 
 ## Inputs
 
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
-| `api-token` | GeekWala API token with `scan:write` ability | ✅ Yes | - |
+| `api-token` | GeekWala API token with `scan:write` ability | **Yes** | - |
 | `file-path` | Path to dependency file (auto-detected if omitted) | No | Auto-detect |
-| `fail-on-critical` | Fail workflow if critical vulnerabilities found | No | `true` |
-| `fail-on-high` | Fail workflow if high severity vulnerabilities found | No | `false` |
+| `severity-threshold` | Minimum severity that triggers failure: `none`, `low`, `medium`, `high`, `critical` | No | Derived from legacy inputs |
+| `fail-on-kev` | Fail if any CISA Known Exploited Vulnerability found | No | `false` |
+| `epss-threshold` | Fail if any vulnerability EPSS score exceeds this (0.0-1.0) | No | Disabled |
+| `only-fixed` | Only count vulnerabilities with known fixes toward failure | No | `false` |
+| `sarif-file` | Path to save SARIF file for GitHub Code Scanning | No | Disabled |
+| `ignore-file` | Path to ignore config YAML (empty string to disable) | No | `.geekwala-ignore.yml` |
+| `output-format` | Comma-separated: `summary`, `json`, `table` | No | `summary` |
+| `json-file` | Path to save JSON report | No | Disabled |
+| `fail-on-critical` | *(Legacy)* Fail on critical vulns. Use `severity-threshold` instead. | No | `true` |
+| `fail-on-high` | *(Legacy)* Fail on high vulns. Use `severity-threshold` instead. | No | `false` |
 | `api-base-url` | GeekWala API base URL | No | `https://geekwala.com` |
 | `retry-attempts` | Number of retry attempts for transient failures | No | `3` |
 | `timeout-seconds` | Request timeout in seconds | No | `300` |
@@ -61,32 +61,12 @@ jobs:
 | `low-count` | Number of low severity vulnerabilities | `10` |
 | `scan-status` | Overall scan status: `PASS`, `FAIL`, or `ERROR` | `PASS` |
 | `has-vulnerabilities` | Boolean indicating if vulnerabilities were found | `true` |
+| `ignored-count` | Number of suppressed vulnerabilities | `2` |
+| `sarif-file` | Path to generated SARIF file | `results.sarif` |
 
-## Supported Ecosystems
+## Example Workflows
 
-### Lockfiles (Prioritized)
-- **npm**: `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`
-- **Python**: `poetry.lock`, `Pipfile.lock`
-- **PHP**: `composer.lock`
-- **Go**: `go.sum`
-- **Rust**: `Cargo.lock`
-- **Ruby**: `Gemfile.lock`
-- **.NET**: `packages.lock.json`
-
-### Manifests
-- **npm**: `package.json`
-- **Python**: `requirements.txt`
-- **PHP**: `composer.json`
-- **Java**: `pom.xml`
-- **Go**: `go.mod`
-- **Rust**: `Cargo.toml`
-- **.NET**: `*.csproj`
-
-## Usage Examples
-
-### Basic Usage with Auto-Detection
-
-The action automatically detects dependency files in your repository:
+### Basic Scan
 
 ```yaml
 - uses: geekwala/security-scan-action@v1
@@ -94,134 +74,155 @@ The action automatically detects dependency files in your repository:
     api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
 ```
 
-### Scan Specific File
+### Strict Security Gate
+
+Fail on any high+ vulnerability and any known-exploited vulnerability:
 
 ```yaml
 - uses: geekwala/security-scan-action@v1
   with:
     api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
-    file-path: ./backend/composer.lock
+    severity-threshold: high
+    fail-on-kev: true
 ```
 
-### Fail on High Severity Vulnerabilities
+### SARIF + GitHub Code Scanning
 
-```yaml
-- uses: geekwala/security-scan-action@v1
-  with:
-    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
-    fail-on-critical: true
-    fail-on-high: true
-```
-
-### Use Outputs in Later Steps
+Upload results to GitHub's Security tab:
 
 ```yaml
 - uses: geekwala/security-scan-action@v1
   id: scan
   with:
     api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+    sarif-file: results.sarif
+    severity-threshold: none  # Don't fail, just report
 
-- name: Comment on PR
-  if: steps.scan.outputs.has-vulnerabilities == 'true'
-  run: |
-    echo "Found ${{ steps.scan.outputs.vulnerable-packages }} vulnerable packages"
-    echo "Critical: ${{ steps.scan.outputs.critical-count }}"
-    echo "High: ${{ steps.scan.outputs.high-count }}"
+- uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with:
+    sarif_file: results.sarif
 ```
 
-### Scan Multiple Ecosystems in Monorepo
+### EPSS-Based Filtering
 
-```yaml
-jobs:
-  scan-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: geekwala/security-scan-action@v1
-        with:
-          api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
-          file-path: ./frontend/package-lock.json
-
-  scan-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: geekwala/security-scan-action@v1
-        with:
-          api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
-          file-path: ./backend/composer.lock
-```
-
-### Only Warn on Vulnerabilities (Don't Fail)
+Only fail on vulnerabilities with >30% exploit probability:
 
 ```yaml
 - uses: geekwala/security-scan-action@v1
   with:
     api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
-    fail-on-critical: false
-    fail-on-high: false
+    epss-threshold: '0.3'
+    severity-threshold: none
 ```
+
+### Warn-Only Mode
+
+Report vulnerabilities without failing the build:
+
+```yaml
+- uses: geekwala/security-scan-action@v1
+  with:
+    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+    severity-threshold: none
+```
+
+### Using an Ignore File
+
+Create `.geekwala-ignore.yml` in your repo root:
+
+```yaml
+ignore:
+  - id: CVE-2021-23337
+    reason: "Not exploitable in our usage of lodash"
+    expires: 2027-06-01  # auto-unignore after this date
+  - id: GHSA-xxxx-yyyy
+    reason: "Accepted risk per security review #42"
+```
+
+The action picks it up automatically:
+
+```yaml
+- uses: geekwala/security-scan-action@v1
+  with:
+    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+```
+
+### Scheduled Weekly Scan
+
+```yaml
+name: Weekly Security Scan
+on:
+  schedule:
+    - cron: '0 9 * * 1'  # Every Monday at 9am
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: geekwala/security-scan-action@v1
+        with:
+          api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+          severity-threshold: low
+          fail-on-kev: true
+          output-format: summary,table
+```
+
+### Only Fail on Fixable Vulnerabilities
+
+```yaml
+- uses: geekwala/security-scan-action@v1
+  with:
+    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+    severity-threshold: high
+    only-fixed: true
+```
+
+## Supported Ecosystems
+
+| Ecosystem | Lockfiles (Prioritized) | Manifests |
+|-----------|-------------------------|-----------|
+| **npm** | `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml` | `package.json` |
+| **Python** | `poetry.lock`, `Pipfile.lock` | `requirements.txt` |
+| **PHP** | `composer.lock` | `composer.json` |
+| **Go** | `go.sum` | `go.mod` |
+| **Rust** | `Cargo.lock` | `Cargo.toml` |
+| **Ruby** | `Gemfile.lock` | - |
+| **.NET** | `packages.lock.json` | `*.csproj` |
 
 ## Getting an API Token
 
 1. Sign up at [geekwala.com](https://geekwala.com)
-2. Navigate to [Dashboard → API Tokens](https://geekwala.com/dashboard/tokens)
+2. Navigate to [Dashboard > API Tokens](https://geekwala.com/dashboard/tokens)
 3. Create a new token with `scan:write` ability
 4. Add the token to your repository secrets as `GEEKWALA_API_TOKEN`
-
-## Workflow Summary
-
-The action generates a comprehensive workflow summary visible in the GitHub Actions UI:
-
-- 🛡️ Overall scan status with emoji indicators
-- 📊 Severity breakdown table (Critical, High, Medium, Low)
-- 📦 Detailed vulnerability information per package
-- 🔍 CVSS scores, EPSS probabilities, and CISA KEV flags
-- 🔗 Direct links to vulnerability details
-
-## Rate Limits
-
-- **Authenticated users**: 50 scans per hour
-- **File size limit**: 256KB
-
-If you hit rate limits, the action will automatically retry with exponential backoff.
 
 ## Troubleshooting
 
 ### Authentication Failed
-
-**Error:** `Authentication failed. Verify your API token has 'scan:write' ability.`
-
-**Solution:**
-1. Check your token at https://geekwala.com/dashboard/tokens
-2. Ensure the token has `scan:write` permission
-3. Verify the secret is named correctly in your repository settings
+Verify your token at https://geekwala.com/dashboard/tokens and ensure it has `scan:write` permission.
 
 ### No Dependency File Found
-
-**Error:** `No supported dependency files found`
-
-**Solution:**
-1. Ensure your repository contains a supported dependency file
-2. Use the `file-path` input to specify the file explicitly
-3. Check that the file is committed to the repository (not in `.gitignore`)
+Ensure your repository contains a supported dependency file, or use the `file-path` input to specify it.
 
 ### File Size Exceeded
-
-**Error:** `File size exceeds maximum allowed size (256KB)`
-
-**Solution:**
-1. For large lockfiles, consider scanning the manifest instead
-2. Contact GeekWala support to discuss higher limits for enterprise
+The file size limit is 500KB for authenticated users. For large lockfiles, consider scanning the manifest instead.
 
 ### Rate Limit Exceeded
+The rate limit is 50 scans/hour. Space out your scans or use conditional execution (`if: github.event_name == 'pull_request'`). [Upgrade to Pro](https://geekwala.com/pricing) for unlimited monthly scans.
 
-**Error:** `Rate limit exceeded (50 scans/hour)`
+### Monorepo Support
+Auto-detection only scans the repository root for dependency files. For monorepos or projects with dependency files in subdirectories, use the `file-path` input to specify the exact path:
 
-**Solution:**
-1. Space out your scans (avoid running on every commit)
-2. Use conditional execution: `if: github.event_name == 'pull_request'`
-3. Upgrade to GeekWala Pro for higher limits
+```yaml
+- uses: geekwala/security-scan-action@v1
+  with:
+    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+    file-path: packages/backend/package-lock.json
+```
+
+To scan multiple dependency files, use separate steps for each file.
 
 ## Contributing
 
@@ -231,13 +232,6 @@ Contributions are welcome! Please open an issue or pull request.
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Links
-
-- [GeekWala Website](https://geekwala.com)
-- [API Documentation](https://geekwala.com/docs/api)
-- [Issue Tracker](https://github.com/Geekwala/security-scan-action/issues)
-- [GitHub Marketplace](https://github.com/marketplace/actions/geekwala-security-scan)
-
 ---
 
-**Powered by GeekWala** • Enriched with EPSS & CISA KEV data
+**Powered by [GeekWala](https://geekwala.com)** | Enriched with EPSS & CISA KEV data

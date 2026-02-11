@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -30,8 +30,11 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
-      - name: Run unit tests
-        run: npm test
+      - name: Run tests with coverage
+        run: npm test -- --coverage
+
+      - name: Type check
+        run: npx tsc --noEmit
 
       - name: Build action
         run: npm run build
@@ -49,14 +52,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Self-Test Action
     needs: test
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Create test package.json
         run: |
-          cat > package.json << 'EOF'
+          cat > ${{ github.workspace }}/test-pkg.json << 'EOF'
           {
             "name": "test-project",
             "version": "1.0.0",
@@ -66,19 +70,45 @@ jobs:
           }
           EOF
 
-      - name: Run action
+      - name: Run action - basic scan
         id: scan
         uses: ./
         with:
           api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
-          fail-on-critical: false
-          fail-on-high: false
+          file-path: test-pkg.json
+          severity-threshold: none
 
-      - name: Verify outputs
+      - name: Verify basic outputs
         run: |
           echo "Total packages: ${{ steps.scan.outputs.total-packages }}"
           echo "Vulnerable packages: ${{ steps.scan.outputs.vulnerable-packages }}"
           echo "Status: ${{ steps.scan.outputs.scan-status }}"
+          echo "Ignored: ${{ steps.scan.outputs.ignored-count }}"
+
+      - name: Run action - SARIF generation
+        id: sarif-scan
+        uses: ./
+        with:
+          api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+          file-path: test-pkg.json
+          severity-threshold: none
+          sarif-file: results.sarif
+          output-format: summary,table
+
+      - name: Verify SARIF file
+        run: |
+          test -f results.sarif
+          python3 -c "import json; d=json.load(open('results.sarif')); assert d['version']=='2.1.0', 'Bad SARIF version'"
+          echo "SARIF file is valid"
+
+      - name: Run action - with ignore file disabled
+        id: ignore-scan
+        uses: ./
+        with:
+          api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+          file-path: test-pkg.json
+          severity-threshold: none
+          ignore-file: ''
 
   # Test published version (as documented in README)
   self-test-published:

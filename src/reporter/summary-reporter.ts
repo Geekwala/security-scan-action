@@ -5,6 +5,8 @@
 import * as core from '@actions/core';
 import { ApiResponse } from '../api/types';
 import { countBySeverity, getVulnerabilitySeverity } from '../utils/severity';
+import { recomputeSummary } from '../utils/summary';
+import { pluralizeVulnerabilities } from '../utils/format';
 
 /**
  * Generate GitHub workflow summary
@@ -20,9 +22,12 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
     return;
   }
 
-  const { summary, results } = response.data;
+  const { results } = response.data;
   const allVulnerabilities = results.flatMap(r => r.vulnerabilities || []);
-  const counts = countBySeverity(allVulnerabilities);
+  const activeVulns = allVulnerabilities.filter(v => !v._ignored);
+  const ignoredCount = allVulnerabilities.filter(v => v._ignored).length;
+  const counts = countBySeverity(activeVulns);
+  const correctedSummary = recomputeSummary(results);
 
   // Start summary
   await core.summary.addHeading('🛡️ GeekWala Security Scan Results', 1);
@@ -30,12 +35,12 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
   // File scanned
   core.summary.addRaw(`**File scanned:** \`${fileName}\``).addBreak();
 
-  // Overall summary
-  const hasVulns = summary.vulnerable_packages > 0;
+  // Overall summary (corrected for ignores)
+  const hasVulns = correctedSummary.vulnerable_packages > 0;
   const emoji = hasVulns ? '⚠️' : '✅';
   core.summary
     .addRaw(
-      `${emoji} **${summary.vulnerable_packages}** of **${summary.total_packages}** packages have known vulnerabilities`
+      `${emoji} **${correctedSummary.vulnerable_packages}** of **${correctedSummary.total_packages}** packages have known vulnerabilities`
     )
     .addBreak()
     .addBreak();
@@ -55,22 +60,25 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
 
   core.summary.addBreak();
 
-  // Vulnerable packages details
+  // Vulnerable packages details (only packages with active vulns)
   if (hasVulns) {
     core.summary.addHeading('Vulnerable Packages', 2);
 
-    const vulnerableResults = results.filter(r => r.affected && r.vulnerabilities?.length > 0);
+    const vulnerableResults = results
+      .filter(r => r.affected && r.vulnerabilities?.length > 0)
+      .filter(r => r.vulnerabilities.some(v => !v._ignored));
 
     for (const result of vulnerableResults) {
+      const activeResultVulns = result.vulnerabilities.filter(v => !v._ignored);
       const severityEmoji = getSeverityEmoji(result.severity);
       core.summary.addHeading(`${severityEmoji} ${result.package}@${result.version}`, 3);
 
       core.summary.addRaw(`**Ecosystem:** ${result.ecosystem}`).addBreak();
-      core.summary.addRaw(`**Vulnerabilities:** ${result.vulnerabilities.length}`).addBreak();
+      core.summary.addRaw(`**Vulnerabilities:** ${activeResultVulns.length}`).addBreak();
       core.summary.addBreak();
 
-      // List vulnerabilities
-      for (const vuln of result.vulnerabilities) {
+      // List only active (non-ignored) vulnerabilities
+      for (const vuln of activeResultVulns) {
         const vulnSeverity = getVulnerabilitySeverity(vuln);
         const vulnEmoji = getSeverityEmoji(vulnSeverity);
 
@@ -83,11 +91,11 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
         // Enrichment data
         const enrichmentData: string[] = [];
 
-        if (vuln.cvss_score !== null && vuln.cvss_score !== undefined) {
+        if (vuln.cvss_score != null) {
           enrichmentData.push(`CVSS: ${vuln.cvss_score.toFixed(1)}`);
         }
 
-        if (vuln.epss_score !== null && vuln.epss_score !== undefined) {
+        if (vuln.epss_score != null) {
           enrichmentData.push(`EPSS: ${(vuln.epss_score * 100).toFixed(2)}%`);
         }
 
@@ -104,8 +112,18 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
 
       core.summary.addBreak();
     }
+    if (ignoredCount > 0) {
+      core.summary.addRaw(
+        `*${ignoredCount} ignored ${pluralizeVulnerabilities(ignoredCount)} not shown above.*`
+      ).addBreak();
+    }
   } else {
     core.summary.addRaw('✅ No vulnerabilities detected in scanned packages.').addBreak();
+    if (ignoredCount > 0) {
+      core.summary.addRaw(
+        `*${ignoredCount} ${pluralizeVulnerabilities(ignoredCount)} ignored.*`
+      ).addBreak();
+    }
   }
 
   // Footer

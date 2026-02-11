@@ -11,16 +11,44 @@ inputs:
     description: 'GeekWala API token with scan:write ability'
     required: true
   file-path:
-    description: 'Path to dependency file (auto-detected if omitted)'
+    description: 'Path to dependency file (auto-detected from repo root if omitted; for monorepos, specify explicitly)'
     required: false
   fail-on-critical:
-    description: 'Fail workflow if critical vulnerabilities found'
+    description: 'Fail workflow if critical vulnerabilities found (legacy, use severity-threshold instead)'
     required: false
     default: 'true'
   fail-on-high:
-    description: 'Fail workflow if high severity vulnerabilities found'
+    description: 'Fail workflow if high severity vulnerabilities found (legacy, use severity-threshold instead)'
     required: false
     default: 'false'
+  severity-threshold:
+    description: 'Minimum severity that triggers failure: none, low, medium, high, critical. Overrides fail-on-critical/fail-on-high when set.'
+    required: false
+  fail-on-kev:
+    description: 'Fail if any CISA Known Exploited Vulnerability found'
+    required: false
+    default: 'false'
+  epss-threshold:
+    description: 'Fail if any vulnerability EPSS score is at or above this value (0.0-1.0)'
+    required: false
+  only-fixed:
+    description: 'Only count vulnerabilities with known fixes toward failure'
+    required: false
+    default: 'false'
+  sarif-file:
+    description: 'Path to save SARIF file for GitHub Code Scanning integration'
+    required: false
+  ignore-file:
+    description: 'Path to ignore config YAML file (default: .geekwala-ignore.yml, empty string to disable)'
+    required: false
+    default: '.geekwala-ignore.yml'
+  output-format:
+    description: 'Comma-separated output formats: summary, json, table'
+    required: false
+    default: 'summary'
+  json-file:
+    description: 'Path to save JSON report'
+    required: false
   api-base-url:
     description: 'GeekWala API base URL'
     required: false
@@ -53,6 +81,10 @@ outputs:
     description: 'Overall scan status: PASS, FAIL, or ERROR'
   has-vulnerabilities:
     description: 'Boolean indicating if any vulnerabilities were found'
+  ignored-count:
+    description: 'Number of suppressed vulnerabilities'
+  sarif-file:
+    description: 'Path to generated SARIF file'
 
 runs:
   using: 'node20'

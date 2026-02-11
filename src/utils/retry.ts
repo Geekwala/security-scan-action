@@ -6,7 +6,7 @@ export interface RetryOptions {
   maxAttempts: number;
   baseDelayMs?: number;
   maxDelayMs?: number;
-  shouldRetry?: (error: Error) => boolean;
+  shouldRetry?: (error: unknown) => boolean;
 }
 
 /**
@@ -22,15 +22,19 @@ export function calculateDelay(attempt: number, baseMs = 1000, maxMs = 30000): n
  * Determine if an error should trigger a retry
  */
 export function isRetryableError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) {
+    return false;
+  }
   const err = error as Record<string, unknown>;
 
   // Network errors
-  if (err?.code === 'ECONNRESET' || err?.code === 'ETIMEDOUT' || err?.code === 'ENOTFOUND') {
+  if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND' || err.code === 'ECONNABORTED') {
     return true;
   }
 
-  // HTTP status codes that should be retried
-  const status = (err?.response as Record<string, unknown>)?.status as number | undefined;
+  // HTTP status codes that should be retried (supports both AxiosError and GeekWalaApiError)
+  const response = err.response as Record<string, unknown> | undefined;
+  const status = response?.status ?? err.statusCode;
   if (status === 429 || status === 500 || status === 502 || status === 503) {
     return true;
   }
@@ -54,29 +58,33 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, options: RetryOp
     shouldRetry = isRetryableError,
   } = options;
 
-  let lastError: Error | undefined;
+  if (maxAttempts < 1) {
+    throw new Error('maxAttempts must be at least 1');
+  }
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await fn();
     } catch (error) {
-      lastError = error as Error;
-
       // Don't retry if this is the last attempt
       if (attempt === maxAttempts) {
         throw error;
       }
 
       // Check if we should retry this error
-      if (!shouldRetry(error as Error)) {
+      if (!shouldRetry(error)) {
         throw error;
       }
 
-      // Calculate delay and wait
-      const delay = calculateDelay(attempt, baseDelayMs, maxDelayMs);
+      // Use Retry-After header delay if available, otherwise exponential backoff
+      const retryAfterMs =
+        typeof error === 'object' && error !== null && 'retryAfterMs' in error && typeof (error as Record<string, unknown>).retryAfterMs === 'number'
+          ? ((error as Record<string, unknown>).retryAfterMs as number)
+          : 0;
+      const delay = retryAfterMs || calculateDelay(attempt, baseDelayMs, maxDelayMs);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 
-  throw lastError;
+  throw new Error('Retry logic error: no attempts made');
 }

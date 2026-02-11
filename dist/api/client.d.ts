@@ -5,6 +5,7 @@ import { ApiResponse } from './types';
 export declare class GeekWalaApiError extends Error {
     statusCode?: number | undefined;
     type?: string | undefined;
+    retryAfterMs?: number;
     constructor(message: string, statusCode?: number | undefined, type?: string | undefined);
 }
 export declare class GeekWalaClient {
@@ -15,6 +16,10 @@ export declare class GeekWalaClient {
      * Run a vulnerability scan
      */
     runScan(fileName: string, content: string): Promise<ApiResponse>;
+    /**
+     * Validate API response shape to prevent downstream crashes from malformed data
+     */
+    private validateResponse;
     /**
      * Handle API errors and convert to meaningful messages
      */

@@ -4,12 +4,19 @@
  */
 
 import * as core from '@actions/core';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { validateInputs } from './validators/input-validator';
 import { detectDependencyFile, validateFile, readFile } from './detector/file-detector';
-import { GeekWalaClient, GeekWalaApiError } from './api/client';
+import { GeekWalaClient } from './api/client';
+import { handleError } from './utils/error-handler';
 import { setActionOutputs, checkFailureThresholds } from './reporter/output-manager';
 import { generateSummary } from './reporter/summary-reporter';
+import { loadIgnoreFile, applyIgnores } from './ignore/index';
+import { generateSarif } from './sarif/index';
+import { generateJsonReport } from './reporter/json-reporter';
+import { generateTableOutput } from './reporter/table-reporter';
+import { pluralizeVulnerabilities } from './utils/format';
 
 /**
  * Main action execution
@@ -34,7 +41,8 @@ async function run(): Promise<void> {
       core.info(`Detected file: ${filePath}`);
     }
 
-    const fileName = path.basename(filePath);
+    const workspace = process.env.GITHUB_WORKSPACE || '.';
+    const fileName = path.relative(workspace, filePath);
 
     // Step 3: Read file content
     core.info(`Reading file: ${fileName}`);
@@ -62,13 +70,54 @@ async function run(): Promise<void> {
     core.info(`Total packages: ${response.data.summary.total_packages}`);
     core.info(`Vulnerable packages: ${response.data.summary.vulnerable_packages}`);
 
-    // Step 6: Set action outputs
+    // Step 6: Apply ignore rules
+    if (inputs.ignoreFile) {
+      const ignoreConfig = await loadIgnoreFile(inputs.ignoreFile);
+      if (ignoreConfig) {
+        const { results, ignoredCount } = applyIgnores(response.data.results, ignoreConfig);
+        response.data.results = results;
+        core.setOutput('ignored-count', ignoredCount.toString());
+        if (ignoredCount > 0) {
+          core.info(`Suppressed ${ignoredCount} ignored ${pluralizeVulnerabilities(ignoredCount)}`);
+        }
+      } else {
+        core.setOutput('ignored-count', '0');
+      }
+    } else {
+      core.setOutput('ignored-count', '0');
+    }
+
+    // Step 7: Set action outputs
     setActionOutputs(response);
 
-    // Step 7: Generate workflow summary
-    await generateSummary(response, fileName);
+    // Step 8: Generate SARIF if requested
+    if (inputs.sarifFile) {
+      core.info(`Generating SARIF report: ${inputs.sarifFile}`);
+      const sarif = generateSarif(response, fileName);
+      await fs.writeFile(inputs.sarifFile, JSON.stringify(sarif, null, 2));
+      core.setOutput('sarif-file', inputs.sarifFile);
+    }
 
-    // Step 8: Check failure thresholds
+    // Step 9: Generate outputs based on format
+    if (inputs.outputFormat.includes('summary')) {
+      await generateSummary(response, fileName);
+    }
+
+    if (inputs.outputFormat.includes('table')) {
+      generateTableOutput(response);
+    }
+
+    if (inputs.outputFormat.includes('json')) {
+      const jsonReport = generateJsonReport(response, fileName);
+      if (inputs.jsonFile) {
+        await fs.writeFile(inputs.jsonFile, JSON.stringify(jsonReport, null, 2));
+        core.info(`JSON report saved to: ${inputs.jsonFile}`);
+      } else {
+        core.info(JSON.stringify(jsonReport, null, 2));
+      }
+    }
+
+    // Step 10: Check failure thresholds
     const { shouldFail, reason, status } = checkFailureThresholds(response, inputs);
 
     // Set scan status output
@@ -81,39 +130,6 @@ async function run(): Promise<void> {
     }
   } catch (error) {
     handleError(error);
-  }
-}
-
-/**
- * Handle errors and set appropriate failure messages
- */
-function handleError(error: unknown): void {
-  if (error instanceof GeekWalaApiError) {
-    // API-specific errors with helpful context
-    core.setFailed(error.message);
-    core.setOutput('scan-status', 'ERROR');
-
-    // Add specific guidance based on error type
-    if (error.type === 'auth_error') {
-      core.error('💡 Tip: Verify your API token at https://geekwala.com/dashboard/tokens');
-    } else if (error.type === 'rate_limit_error') {
-      core.error('💡 Tip: Consider spacing out your scans or upgrading your plan');
-    } else if (error.type === 'validation_error') {
-      core.error('💡 Tip: Check that your dependency file has exact package versions');
-    }
-  } else if (error instanceof Error) {
-    // Generic errors
-    core.setFailed(`Action failed: ${error.message}`);
-    core.setOutput('scan-status', 'ERROR');
-
-    // Log stack trace for debugging
-    if (error.stack) {
-      core.debug(error.stack);
-    }
-  } else {
-    // Unknown error type
-    core.setFailed(`Action failed with unknown error: ${String(error)}`);
-    core.setOutput('scan-status', 'ERROR');
   }
 }
 

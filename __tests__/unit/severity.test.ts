@@ -2,6 +2,7 @@
  * Tests for severity classification
  */
 
+import * as core from '@actions/core';
 import {
   normalizeSeverity,
   getSeverityFromCvss,
@@ -9,6 +10,8 @@ import {
   countBySeverity,
 } from '../../src/utils/severity';
 import { Vulnerability } from '../../src/api/types';
+
+jest.mock('@actions/core');
 
 describe('Severity Classification', () => {
   describe('normalizeSeverity', () => {
@@ -62,6 +65,42 @@ describe('Severity Classification', () => {
       };
 
       expect(getVulnerabilitySeverity(vuln)).toBe('UNKNOWN');
+    });
+
+    it('should return UNKNOWN and warn for CVSS vector string without numeric score', () => {
+      const vuln: Vulnerability = {
+        id: 'CVE-2021-9999',
+        severity: [{ type: 'CVSS_V3', score: 'CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H' }],
+      };
+
+      expect(getVulnerabilitySeverity(vuln)).toBe('UNKNOWN');
+      expect(core.warning).toHaveBeenCalledWith(
+        expect.stringContaining('CVSS vector string found')
+      );
+    });
+
+    it('should use numeric score when both vector and numeric entries exist', () => {
+      const vuln: Vulnerability = {
+        id: 'CVE-2021-9999',
+        severity: [
+          { type: 'CVSS_V3', score: 'CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H' },
+          { type: 'CVSS_V3', score: '7.2' },
+        ],
+      };
+
+      expect(getVulnerabilitySeverity(vuln)).toBe('HIGH');
+    });
+
+    it('should fall back to CVSS_V2 numeric score when CVSS_V3 is a vector string', () => {
+      const vuln: Vulnerability = {
+        id: 'CVE-2021-9999',
+        severity: [
+          { type: 'CVSS_V3', score: 'CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H' },
+          { type: 'CVSS_V2', score: '6.5' },
+        ],
+      };
+
+      expect(getVulnerabilitySeverity(vuln)).toBe('MEDIUM');
     });
   });
 

@@ -8,11 +8,13 @@ export type ScanStatus = 'PASS' | 'FAIL' | 'ERROR';
  */
 export declare function setActionOutputs(response: ApiResponse): void;
 /**
- * Check if workflow should fail based on severity thresholds
+ * Check if workflow should fail based on severity thresholds.
+ * Collects ALL fail reasons rather than short-circuiting on first match.
  */
 export declare function checkFailureThresholds(response: ApiResponse, inputs: ActionInputs): {
     shouldFail: boolean;
     reason?: string;
+    reasons: string[];
     status: ScanStatus;
 };
 //# sourceMappingURL=output-manager.d.ts.map
