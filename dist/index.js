@@ -39950,9 +39950,7 @@ class GeekWalaClient {
         }
         const status = error.response.status;
         const rawData = error.response.data;
-        const data = (typeof rawData === 'object' && rawData !== null)
-            ? rawData
-            : {};
+        const data = typeof rawData === 'object' && rawData !== null ? rawData : {};
         switch (status) {
             case 401:
                 return new GeekWalaApiError(`Authentication failed. Verify your API token has 'scan:write' ability. Create a token at https://geekwala.com/developers/api-tokens`, 401, 'auth_error');
@@ -40316,7 +40314,9 @@ async function loadIgnoreFile(filePath) {
         }
         const entries = [];
         for (const entry of parsed.ignore) {
-            if (typeof entry === 'object' && entry !== null && typeof entry.id === 'string') {
+            if (typeof entry === 'object' &&
+                entry !== null &&
+                typeof entry.id === 'string') {
                 const e = entry;
                 entries.push({
                     id: String(e.id),
@@ -40570,7 +40570,9 @@ function generateJsonReport(response, fileName, scanDurationMs) {
         ...(scanDurationMs != null ? { scanDurationMs } : {}),
         tool: 'geekwala-security-scan-action',
         fileScanned: fileName,
-        summary: response.data ? (0, summary_1.recomputeSummary)(response.data.results) : { total_packages: 0, vulnerable_packages: 0, safe_packages: 0 },
+        summary: response.data
+            ? (0, summary_1.recomputeSummary)(response.data.results)
+            : { total_packages: 0, vulnerable_packages: 0, safe_packages: 0 },
         vulnerabilities,
         ignoredCount,
     };
@@ -40851,22 +40853,24 @@ async function generateSummary(response, fileName) {
                 }
                 // Fix version remediation guidance
                 if (vuln.fix_version) {
-                    core.summary
-                        .addRaw(`**Fix available:** Upgrade to \`${vuln.fix_version}\``)
-                        .addBreak();
+                    core.summary.addRaw(`**Fix available:** Upgrade to \`${vuln.fix_version}\``).addBreak();
                 }
                 core.summary.addBreak();
             }
             core.summary.addBreak();
         }
         if (ignoredCount > 0) {
-            core.summary.addRaw(`*${ignoredCount} ignored ${(0, format_1.pluralizeVulnerabilities)(ignoredCount)} not shown above.*`).addBreak();
+            core.summary
+                .addRaw(`*${ignoredCount} ignored ${(0, format_1.pluralizeVulnerabilities)(ignoredCount)} not shown above.*`)
+                .addBreak();
         }
     }
     else {
         core.summary.addRaw('✅ No vulnerabilities detected in scanned packages.').addBreak();
         if (ignoredCount > 0) {
-            core.summary.addRaw(`*${ignoredCount} ${(0, format_1.pluralizeVulnerabilities)(ignoredCount)} ignored.*`).addBreak();
+            core.summary
+                .addRaw(`*${ignoredCount} ${(0, format_1.pluralizeVulnerabilities)(ignoredCount)} ignored.*`)
+                .addBreak();
         }
     }
     // Footer
@@ -40998,12 +41002,18 @@ function generateTableOutput(response) {
         kev: 3,
         fix: Math.max(3, ...sorted.map(v => (v.vuln.fix_version || '-').length)),
     };
-    const header = 'Package'.padEnd(cols.pkg) + '  ' +
-        'Version'.padEnd(cols.ver) + '  ' +
-        'Vulnerability'.padEnd(cols.id) + '  ' +
-        'Severity'.padEnd(cols.sev) + '  ' +
-        'EPSS'.padEnd(cols.epss) + '  ' +
-        'KEV'.padEnd(cols.kev) + '  ' +
+    const header = 'Package'.padEnd(cols.pkg) +
+        '  ' +
+        'Version'.padEnd(cols.ver) +
+        '  ' +
+        'Vulnerability'.padEnd(cols.id) +
+        '  ' +
+        'Severity'.padEnd(cols.sev) +
+        '  ' +
+        'EPSS'.padEnd(cols.epss) +
+        '  ' +
+        'KEV'.padEnd(cols.kev) +
+        '  ' +
         'Fix';
     const separator = '\u2500'.repeat(header.length);
     core.info('');
@@ -41011,17 +41021,21 @@ function generateTableOutput(response) {
     core.info(separator);
     for (const entry of sorted) {
         const severity = (0, severity_1.getVulnerabilitySeverity)(entry.vuln);
-        const epss = entry.vuln.epss_score != null
-            ? `${(entry.vuln.epss_score * 100).toFixed(1)}%`
-            : '-';
+        const epss = entry.vuln.epss_score != null ? `${(entry.vuln.epss_score * 100).toFixed(1)}%` : '-';
         const kev = entry.vuln.is_known_exploited ? 'YES' : '-';
         const fix = entry.vuln.fix_version || '-';
-        const line = entry.pkg.padEnd(cols.pkg) + '  ' +
-            entry.version.padEnd(cols.ver) + '  ' +
-            entry.vuln.id.padEnd(cols.id) + '  ' +
-            severity.padEnd(cols.sev) + '  ' +
-            epss.padEnd(cols.epss) + '  ' +
-            kev.padEnd(cols.kev) + '  ' +
+        const line = entry.pkg.padEnd(cols.pkg) +
+            '  ' +
+            entry.version.padEnd(cols.ver) +
+            '  ' +
+            entry.vuln.id.padEnd(cols.id) +
+            '  ' +
+            severity.padEnd(cols.sev) +
+            '  ' +
+            epss.padEnd(cols.epss) +
+            '  ' +
+            kev.padEnd(cols.kev) +
+            '  ' +
             fix;
         core.info(line);
     }
@@ -41100,11 +41114,16 @@ function severityToScore(vuln) {
         return vuln.cvss_score.toFixed(1);
     const severity = (0, severity_1.getVulnerabilitySeverity)(vuln);
     switch (severity) {
-        case 'CRITICAL': return '9.0';
-        case 'HIGH': return '7.0';
-        case 'MEDIUM': return '4.0';
-        case 'LOW': return '1.0';
-        default: return '0.0';
+        case 'CRITICAL':
+            return '9.0';
+        case 'HIGH':
+            return '7.0';
+        case 'MEDIUM':
+            return '4.0';
+        case 'LOW':
+            return '1.0';
+        default:
+            return '0.0';
     }
 }
 /**
@@ -41357,7 +41376,10 @@ function isRetryableError(error) {
     }
     const err = error;
     // Network errors
-    if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND' || err.code === 'ECONNABORTED') {
+    if (err.code === 'ECONNRESET' ||
+        err.code === 'ETIMEDOUT' ||
+        err.code === 'ENOTFOUND' ||
+        err.code === 'ECONNABORTED') {
         return true;
     }
     // HTTP status codes that should be retried (supports both AxiosError and GeekWalaApiError)
@@ -41394,7 +41416,10 @@ async function retryWithBackoff(fn, options) {
                 throw error;
             }
             // Use Retry-After header delay if available, otherwise exponential backoff
-            const retryAfterMs = typeof error === 'object' && error !== null && 'retryAfterMs' in error && typeof error.retryAfterMs === 'number'
+            const retryAfterMs = typeof error === 'object' &&
+                error !== null &&
+                'retryAfterMs' in error &&
+                typeof error.retryAfterMs === 'number'
                 ? error.retryAfterMs
                 : 0;
             const delay = retryAfterMs || calculateDelay(attempt, baseDelayMs, maxDelayMs);
@@ -41631,7 +41656,13 @@ class InputValidationError extends Error {
     }
 }
 exports.InputValidationError = InputValidationError;
-const VALID_SEVERITY_THRESHOLDS = ['none', 'low', 'medium', 'high', 'critical'];
+const VALID_SEVERITY_THRESHOLDS = [
+    'none',
+    'low',
+    'medium',
+    'high',
+    'critical',
+];
 /**
  * Parse and validate GitHub Action inputs
  */
@@ -41661,11 +41692,14 @@ function validateInputs() {
     const sarifFile = sarifFileRaw ? validateFilePath(sarifFileRaw, 'sarif-file') : undefined;
     // Ignore file
     const ignoreFileRaw = core.getInput('ignore-file');
-    const ignoreFilePath = ignoreFileRaw === '' ? undefined : (ignoreFileRaw || '.geekwala-ignore.yml');
+    const ignoreFilePath = ignoreFileRaw === '' ? undefined : ignoreFileRaw || '.geekwala-ignore.yml';
     const ignoreFile = ignoreFilePath ? validateFilePath(ignoreFilePath, 'ignore-file') : undefined;
     // Output format
     const outputFormatRaw = core.getInput('output-format') || 'summary';
-    const outputFormat = outputFormatRaw.split(',').map(f => f.trim()).filter(Boolean);
+    const outputFormat = outputFormatRaw
+        .split(',')
+        .map(f => f.trim())
+        .filter(Boolean);
     for (const fmt of outputFormat) {
         if (!['summary', 'json', 'table'].includes(fmt)) {
             throw new InputValidationError(`Invalid output-format: ${fmt}. Valid values: summary, json, table`);
@@ -41760,7 +41794,8 @@ function parsePositiveInteger(value, inputName) {
 function validateFilePath(filePath, inputName) {
     const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
     const resolved = path.resolve(workspace, filePath);
-    if (!resolved.startsWith(path.resolve(workspace) + path.sep) && resolved !== path.resolve(workspace)) {
+    if (!resolved.startsWith(path.resolve(workspace) + path.sep) &&
+        resolved !== path.resolve(workspace)) {
         throw new InputValidationError(`${inputName} must be within the workspace directory. Got: ${filePath}`);
     }
     return resolved;
