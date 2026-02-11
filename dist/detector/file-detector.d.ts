@@ -4,6 +4,9 @@
 export declare class FileNotFoundError extends Error {
     constructor(message: string);
 }
+export declare class FileSizeError extends Error {
+    constructor(message: string);
+}
 /**
  * Detect dependency file in the repository
  * Searches in priority order (lockfiles before manifests)

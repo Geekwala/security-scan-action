@@ -34,7 +34,7 @@ GitHub Action to scan your dependencies for known vulnerabilities using the [Gee
 |-------|-------------|----------|---------|
 | `api-token` | GeekWala API token with `scan:write` ability | **Yes** | - |
 | `file-path` | Path to dependency file (auto-detected if omitted) | No | Auto-detect |
-| `severity-threshold` | Minimum severity that triggers failure: `none`, `low`, `medium`, `high`, `critical` | No | Derived from legacy inputs |
+| `severity-threshold` | Minimum severity that triggers failure: `none`, `low`, `medium`, `high`, `critical` | No | `critical` (via legacy `fail-on-critical`) |
 | `fail-on-kev` | Fail if any CISA Known Exploited Vulnerability found | No | `false` |
 | `epss-threshold` | Fail if any vulnerability EPSS score exceeds this (0.0-1.0) | No | Disabled |
 | `only-fixed` | Only count vulnerabilities with known fixes toward failure | No | `false` |
@@ -59,6 +59,7 @@ GitHub Action to scan your dependencies for known vulnerabilities using the [Gee
 | `high-count` | Number of high severity vulnerabilities | `2` |
 | `medium-count` | Number of medium severity vulnerabilities | `5` |
 | `low-count` | Number of low severity vulnerabilities | `10` |
+| `unknown-count` | Number of vulnerabilities with unknown severity | `0` |
 | `scan-status` | Overall scan status: `PASS`, `FAIL`, or `ERROR` | `PASS` |
 | `has-vulnerabilities` | Boolean indicating if vulnerabilities were found | `true` |
 | `ignored-count` | Number of suppressed vulnerabilities | `2` |
@@ -88,20 +89,24 @@ Fail on any high+ vulnerability and any known-exploited vulnerability:
 
 ### SARIF + GitHub Code Scanning
 
-Upload results to GitHub's Security tab:
+Upload results to GitHub's Security tab. Requires `security-events: write` permission:
 
 ```yaml
-- uses: geekwala/security-scan-action@v1
-  id: scan
-  with:
-    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
-    sarif-file: results.sarif
-    severity-threshold: none  # Don't fail, just report
+permissions:
+  security-events: write
 
-- uses: github/codeql-action/upload-sarif@v3
-  if: always()
-  with:
-    sarif_file: results.sarif
+steps:
+  - uses: geekwala/security-scan-action@v1
+    id: scan
+    with:
+      api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+      sarif-file: results.sarif
+      severity-threshold: none  # Don't fail, just report
+
+  - uses: github/codeql-action/upload-sarif@v3
+    if: always()
+    with:
+      sarif_file: results.sarif
 ```
 
 ### EPSS-Based Filtering
@@ -125,6 +130,18 @@ Report vulnerabilities without failing the build:
   with:
     api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
     severity-threshold: none
+```
+
+### Soft-Fail (Report + Continue)
+
+Report vulnerabilities and mark the step as failed, but don't block the workflow:
+
+```yaml
+- uses: geekwala/security-scan-action@v1
+  continue-on-error: true
+  with:
+    api-token: ${{ secrets.GEEKWALA_API_TOKEN }}
+    severity-threshold: high
 ```
 
 ### Using an Ignore File

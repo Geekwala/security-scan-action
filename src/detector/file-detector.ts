@@ -13,6 +13,13 @@ export class FileNotFoundError extends Error {
   }
 }
 
+export class FileSizeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FileSizeError';
+  }
+}
+
 /**
  * Detect dependency file in the repository
  * Searches in priority order (lockfiles before manifests)
@@ -87,17 +94,17 @@ export async function validateFile(filePath: string): Promise<void> {
 /**
  * Read file content with size guard to prevent OOM on large files
  */
-export async function readFile(filePath: string, maxSizeBytes = 512 * 1024): Promise<string> {
+export async function readFile(filePath: string, maxSizeBytes = 500 * 1024): Promise<string> {
   try {
     const stats = await fs.stat(filePath);
     if (stats.size > maxSizeBytes) {
-      throw new FileNotFoundError(
+      throw new FileSizeError(
         `File ${filePath} is ${(stats.size / 1024).toFixed(0)}KB, exceeds maximum allowed size of ${(maxSizeBytes / 1024).toFixed(0)}KB`
       );
     }
     return await fs.readFile(filePath, 'utf-8');
   } catch (error) {
-    if (error instanceof FileNotFoundError) throw error;
+    if (error instanceof FileNotFoundError || error instanceof FileSizeError) throw error;
     throw new FileNotFoundError(`Failed to read file ${filePath}: ${(error as Error).message}`);
   }
 }

@@ -5,6 +5,7 @@ import { ApiResponse } from '../api/types';
 export interface JsonReport {
     version: string;
     generatedAt: string;
+    scanDurationMs?: number;
     tool: string;
     fileScanned: string;
     summary: {
@@ -31,5 +32,5 @@ export interface JsonReport {
 /**
  * Generate structured JSON report from scan results
  */
-export declare function generateJsonReport(response: ApiResponse, fileName: string): JsonReport;
+export declare function generateJsonReport(response: ApiResponse, fileName: string, scanDurationMs?: number): JsonReport;
 //# sourceMappingURL=json-reporter.d.ts.map

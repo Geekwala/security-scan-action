@@ -77,6 +77,8 @@ outputs:
     description: 'Number of medium severity vulnerabilities'
   low-count:
     description: 'Number of low severity vulnerabilities'
+  unknown-count:
+    description: 'Number of vulnerabilities with unknown severity'
   scan-status:
     description: 'Overall scan status: PASS, FAIL, or ERROR'
   has-vulnerabilities:

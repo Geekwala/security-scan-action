@@ -10,6 +10,7 @@ import { getVulnerabilitySeverity } from '../utils/severity';
 export interface JsonReport {
   version: string;
   generatedAt: string;
+  scanDurationMs?: number;
   tool: string;
   fileScanned: string;
   summary: {
@@ -37,7 +38,11 @@ export interface JsonReport {
 /**
  * Generate structured JSON report from scan results
  */
-export function generateJsonReport(response: ApiResponse, fileName: string): JsonReport {
+export function generateJsonReport(
+  response: ApiResponse,
+  fileName: string,
+  scanDurationMs?: number
+): JsonReport {
   const vulnerabilities: JsonReport['vulnerabilities'] = [];
   let ignoredCount = 0;
 
@@ -69,6 +74,7 @@ export function generateJsonReport(response: ApiResponse, fileName: string): Jso
   return {
     version: VERSION,
     generatedAt: new Date().toISOString(),
+    ...(scanDurationMs != null ? { scanDurationMs } : {}),
     tool: 'geekwala-security-scan-action',
     fileScanned: fileName,
     summary: response.data ? recomputeSummary(response.data.results) : { total_packages: 0, vulnerable_packages: 0, safe_packages: 0 },

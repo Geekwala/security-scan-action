@@ -82,7 +82,10 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
         const vulnSeverity = getVulnerabilitySeverity(vuln);
         const vulnEmoji = getSeverityEmoji(vulnSeverity);
 
-        core.summary.addRaw(`**${vulnEmoji} ${vuln.id}**`).addBreak();
+        // Hyperlink vuln ID to advisory URL if available
+        const ref = vuln.references?.find(r => r.type === 'WEB' || r.type === 'ADVISORY');
+        const vulnLabel = ref ? `[${vuln.id}](${ref.url})` : vuln.id;
+        core.summary.addRaw(`**${vulnEmoji} ${vulnLabel}**`).addBreak();
 
         if (vuln.summary) {
           core.summary.addRaw(vuln.summary).addBreak();
@@ -105,6 +108,13 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
 
         if (enrichmentData.length > 0) {
           core.summary.addRaw(`*${enrichmentData.join(' | ')}*`).addBreak();
+        }
+
+        // Fix version remediation guidance
+        if (vuln.fix_version) {
+          core.summary
+            .addRaw(`**Fix available:** Upgrade to \`${vuln.fix_version}\``)
+            .addBreak();
         }
 
         core.summary.addBreak();

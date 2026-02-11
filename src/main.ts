@@ -60,13 +60,15 @@ async function run(): Promise<void> {
 
     // Step 5: Run scan
     core.info('Calling GeekWala API...');
+    const scanStartTime = Date.now();
     const response = await client.runScan(fileName, content);
+    const scanDurationMs = Date.now() - scanStartTime;
 
     if (!response.success || !response.data) {
       throw new Error(response.error || 'Scan failed with unknown error');
     }
 
-    core.info('✅ Scan completed successfully');
+    core.info(`✅ Scan completed successfully in ${(scanDurationMs / 1000).toFixed(1)}s`);
     core.info(`Total packages: ${response.data.summary.total_packages}`);
     core.info(`Vulnerable packages: ${response.data.summary.vulnerable_packages}`);
 
@@ -94,6 +96,7 @@ async function run(): Promise<void> {
     if (inputs.sarifFile) {
       core.info(`Generating SARIF report: ${inputs.sarifFile}`);
       const sarif = generateSarif(response, fileName);
+      await fs.mkdir(path.dirname(inputs.sarifFile), { recursive: true });
       await fs.writeFile(inputs.sarifFile, JSON.stringify(sarif, null, 2));
       core.setOutput('sarif-file', inputs.sarifFile);
     }
@@ -108,8 +111,9 @@ async function run(): Promise<void> {
     }
 
     if (inputs.outputFormat.includes('json')) {
-      const jsonReport = generateJsonReport(response, fileName);
+      const jsonReport = generateJsonReport(response, fileName, scanDurationMs);
       if (inputs.jsonFile) {
+        await fs.mkdir(path.dirname(inputs.jsonFile), { recursive: true });
         await fs.writeFile(inputs.jsonFile, JSON.stringify(jsonReport, null, 2));
         core.info(`JSON report saved to: ${inputs.jsonFile}`);
       } else {

@@ -48,6 +48,7 @@ export function setActionOutputs(response: ApiResponse): void {
   core.setOutput('high-count', counts.high.toString());
   core.setOutput('medium-count', counts.medium.toString());
   core.setOutput('low-count', counts.low.toString());
+  core.setOutput('unknown-count', counts.unknown.toString());
 
   // Boolean flag (corrected for ignores)
   const hasVulns = correctedSummary.vulnerable_packages > 0;

@@ -4,6 +4,7 @@
 
 import * as core from '@actions/core';
 import { GeekWalaApiError } from '../../src/api/client';
+import { FileSizeError } from '../../src/detector/file-detector';
 import { handleError } from '../../src/utils/error-handler';
 
 jest.mock('@actions/core');
@@ -11,6 +12,19 @@ jest.mock('@actions/core');
 describe('handleError', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('FileSizeError handling', () => {
+    it('should handle file size errors with tip', () => {
+      const error = new FileSizeError('File is 501KB, exceeds maximum allowed size of 500KB');
+      handleError(error);
+
+      expect(core.setFailed).toHaveBeenCalledWith(error.message);
+      expect(core.setOutput).toHaveBeenCalledWith('scan-status', 'ERROR');
+      expect(core.error).toHaveBeenCalledWith(
+        expect.stringContaining('500KB')
+      );
+    });
   });
 
   describe('GeekWalaApiError handling', () => {

@@ -264,17 +264,7 @@ describe('Main Entry Point Integration', () => {
       const packageJsonPath = path.join(TEST_WORKSPACE, 'package.json');
       await fs.writeFile(packageJsonPath, fixtures.largeFileContent);
 
-      const inputs = validateInputs();
-      const content = await readFile(packageJsonPath);
-
-      const client = new GeekWalaClient(
-        inputs.apiToken,
-        inputs.apiBaseUrl,
-        inputs.timeoutSeconds,
-        inputs.retryAttempts
-      );
-
-      await expect(client.runScan('package.json', content)).rejects.toThrow(
+      await expect(readFile(packageJsonPath)).rejects.toThrow(
         /exceeds maximum allowed size/
       );
     });

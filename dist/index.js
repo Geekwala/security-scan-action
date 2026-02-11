@@ -40028,7 +40028,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FileNotFoundError = void 0;
+exports.FileSizeError = exports.FileNotFoundError = void 0;
 exports.detectDependencyFile = detectDependencyFile;
 exports.validateFile = validateFile;
 exports.readFile = readFile;
@@ -40042,6 +40042,13 @@ class FileNotFoundError extends Error {
     }
 }
 exports.FileNotFoundError = FileNotFoundError;
+class FileSizeError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'FileSizeError';
+    }
+}
+exports.FileSizeError = FileSizeError;
 /**
  * Detect dependency file in the repository
  * Searches in priority order (lockfiles before manifests)
@@ -40105,16 +40112,16 @@ async function validateFile(filePath) {
 /**
  * Read file content with size guard to prevent OOM on large files
  */
-async function readFile(filePath, maxSizeBytes = 512 * 1024) {
+async function readFile(filePath, maxSizeBytes = 500 * 1024) {
     try {
         const stats = await fs.stat(filePath);
         if (stats.size > maxSizeBytes) {
-            throw new FileNotFoundError(`File ${filePath} is ${(stats.size / 1024).toFixed(0)}KB, exceeds maximum allowed size of ${(maxSizeBytes / 1024).toFixed(0)}KB`);
+            throw new FileSizeError(`File ${filePath} is ${(stats.size / 1024).toFixed(0)}KB, exceeds maximum allowed size of ${(maxSizeBytes / 1024).toFixed(0)}KB`);
         }
         return await fs.readFile(filePath, 'utf-8');
     }
     catch (error) {
-        if (error instanceof FileNotFoundError)
+        if (error instanceof FileNotFoundError || error instanceof FileSizeError)
             throw error;
         throw new FileNotFoundError(`Failed to read file ${filePath}: ${error.message}`);
     }
@@ -40438,11 +40445,13 @@ async function run() {
         const client = new client_1.GeekWalaClient(inputs.apiToken, inputs.apiBaseUrl, inputs.timeoutSeconds, inputs.retryAttempts);
         // Step 5: Run scan
         core.info('Calling GeekWala API...');
+        const scanStartTime = Date.now();
         const response = await client.runScan(fileName, content);
+        const scanDurationMs = Date.now() - scanStartTime;
         if (!response.success || !response.data) {
             throw new Error(response.error || 'Scan failed with unknown error');
         }
-        core.info('✅ Scan completed successfully');
+        core.info(`✅ Scan completed successfully in ${(scanDurationMs / 1000).toFixed(1)}s`);
         core.info(`Total packages: ${response.data.summary.total_packages}`);
         core.info(`Vulnerable packages: ${response.data.summary.vulnerable_packages}`);
         // Step 6: Apply ignore rules
@@ -40469,6 +40478,7 @@ async function run() {
         if (inputs.sarifFile) {
             core.info(`Generating SARIF report: ${inputs.sarifFile}`);
             const sarif = (0, index_2.generateSarif)(response, fileName);
+            await fs.mkdir(path.dirname(inputs.sarifFile), { recursive: true });
             await fs.writeFile(inputs.sarifFile, JSON.stringify(sarif, null, 2));
             core.setOutput('sarif-file', inputs.sarifFile);
         }
@@ -40480,8 +40490,9 @@ async function run() {
             (0, table_reporter_1.generateTableOutput)(response);
         }
         if (inputs.outputFormat.includes('json')) {
-            const jsonReport = (0, json_reporter_1.generateJsonReport)(response, fileName);
+            const jsonReport = (0, json_reporter_1.generateJsonReport)(response, fileName, scanDurationMs);
             if (inputs.jsonFile) {
+                await fs.mkdir(path.dirname(inputs.jsonFile), { recursive: true });
                 await fs.writeFile(inputs.jsonFile, JSON.stringify(jsonReport, null, 2));
                 core.info(`JSON report saved to: ${inputs.jsonFile}`);
             }
@@ -40526,7 +40537,7 @@ const severity_1 = __nccwpck_require__(5278);
 /**
  * Generate structured JSON report from scan results
  */
-function generateJsonReport(response, fileName) {
+function generateJsonReport(response, fileName, scanDurationMs) {
     const vulnerabilities = [];
     let ignoredCount = 0;
     if (response.success && response.data) {
@@ -40556,6 +40567,7 @@ function generateJsonReport(response, fileName) {
     return {
         version: version_1.VERSION,
         generatedAt: new Date().toISOString(),
+        ...(scanDurationMs != null ? { scanDurationMs } : {}),
         tool: 'geekwala-security-scan-action',
         fileScanned: fileName,
         summary: response.data ? (0, summary_1.recomputeSummary)(response.data.results) : { total_packages: 0, vulnerable_packages: 0, safe_packages: 0 },
@@ -40647,6 +40659,7 @@ function setActionOutputs(response) {
     core.setOutput('high-count', counts.high.toString());
     core.setOutput('medium-count', counts.medium.toString());
     core.setOutput('low-count', counts.low.toString());
+    core.setOutput('unknown-count', counts.unknown.toString());
     // Boolean flag (corrected for ignores)
     const hasVulns = correctedSummary.vulnerable_packages > 0;
     core.setOutput('has-vulnerabilities', hasVulns.toString());
@@ -40815,7 +40828,10 @@ async function generateSummary(response, fileName) {
             for (const vuln of activeResultVulns) {
                 const vulnSeverity = (0, severity_1.getVulnerabilitySeverity)(vuln);
                 const vulnEmoji = getSeverityEmoji(vulnSeverity);
-                core.summary.addRaw(`**${vulnEmoji} ${vuln.id}**`).addBreak();
+                // Hyperlink vuln ID to advisory URL if available
+                const ref = vuln.references?.find(r => r.type === 'WEB' || r.type === 'ADVISORY');
+                const vulnLabel = ref ? `[${vuln.id}](${ref.url})` : vuln.id;
+                core.summary.addRaw(`**${vulnEmoji} ${vulnLabel}**`).addBreak();
                 if (vuln.summary) {
                     core.summary.addRaw(vuln.summary).addBreak();
                 }
@@ -40832,6 +40848,12 @@ async function generateSummary(response, fileName) {
                 }
                 if (enrichmentData.length > 0) {
                     core.summary.addRaw(`*${enrichmentData.join(' | ')}*`).addBreak();
+                }
+                // Fix version remediation guidance
+                if (vuln.fix_version) {
+                    core.summary
+                        .addRaw(`**Fix available:** Upgrade to \`${vuln.fix_version}\``)
+                        .addBreak();
                 }
                 core.summary.addBreak();
             }
@@ -41243,11 +41265,17 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.handleError = handleError;
 const core = __importStar(__nccwpck_require__(7484));
 const client_1 = __nccwpck_require__(7085);
+const file_detector_1 = __nccwpck_require__(3761);
 /**
  * Handle errors and set appropriate failure messages
  */
 function handleError(error) {
-    if (error instanceof client_1.GeekWalaApiError) {
+    if (error instanceof file_detector_1.FileSizeError) {
+        core.setFailed(error.message);
+        core.setOutput('scan-status', 'ERROR');
+        core.error('💡 Tip: The file size limit is 500KB. For large lockfiles, consider scanning the manifest instead.');
+    }
+    else if (error instanceof client_1.GeekWalaApiError) {
         core.setFailed(error.message);
         core.setOutput('scan-status', 'ERROR');
         if (error.type === 'auth_error') {

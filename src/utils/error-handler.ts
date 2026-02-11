@@ -4,12 +4,19 @@
 
 import * as core from '@actions/core';
 import { GeekWalaApiError } from '../api/client';
+import { FileSizeError } from '../detector/file-detector';
 
 /**
  * Handle errors and set appropriate failure messages
  */
 export function handleError(error: unknown): void {
-  if (error instanceof GeekWalaApiError) {
+  if (error instanceof FileSizeError) {
+    core.setFailed(error.message);
+    core.setOutput('scan-status', 'ERROR');
+    core.error(
+      '💡 Tip: The file size limit is 500KB. For large lockfiles, consider scanning the manifest instead.'
+    );
+  } else if (error instanceof GeekWalaApiError) {
     core.setFailed(error.message);
     core.setOutput('scan-status', 'ERROR');
 
