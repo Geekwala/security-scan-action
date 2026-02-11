@@ -28,7 +28,12 @@ export function isRetryableError(error: unknown): boolean {
   const err = error as Record<string, unknown>;
 
   // Network errors
-  if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND' || err.code === 'ECONNABORTED') {
+  if (
+    err.code === 'ECONNRESET' ||
+    err.code === 'ETIMEDOUT' ||
+    err.code === 'ENOTFOUND' ||
+    err.code === 'ECONNABORTED'
+  ) {
     return true;
   }
 
@@ -78,7 +83,10 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, options: RetryOp
 
       // Use Retry-After header delay if available, otherwise exponential backoff
       const retryAfterMs =
-        typeof error === 'object' && error !== null && 'retryAfterMs' in error && typeof (error as Record<string, unknown>).retryAfterMs === 'number'
+        typeof error === 'object' &&
+        error !== null &&
+        'retryAfterMs' in error &&
+        typeof (error as Record<string, unknown>).retryAfterMs === 'number'
           ? ((error as Record<string, unknown>).retryAfterMs as number)
           : 0;
       const delay = retryAfterMs || calculateDelay(attempt, baseDelayMs, maxDelayMs);

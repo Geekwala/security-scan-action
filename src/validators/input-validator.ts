@@ -13,7 +13,13 @@ export class InputValidationError extends Error {
   }
 }
 
-const VALID_SEVERITY_THRESHOLDS: SeverityThreshold[] = ['none', 'low', 'medium', 'high', 'critical'];
+const VALID_SEVERITY_THRESHOLDS: SeverityThreshold[] = [
+  'none',
+  'low',
+  'medium',
+  'high',
+  'critical',
+];
 
 /**
  * Parse and validate GitHub Action inputs
@@ -41,7 +47,11 @@ export function validateInputs(): ActionInputs {
 
   // New gate inputs
   const severityThresholdRaw = core.getInput('severity-threshold') || '';
-  const severityThreshold = parseSeverityThreshold(severityThresholdRaw, failOnCritical, failOnHigh);
+  const severityThreshold = parseSeverityThreshold(
+    severityThresholdRaw,
+    failOnCritical,
+    failOnHigh
+  );
 
   const failOnKev = parseBoolean(core.getInput('fail-on-kev') || 'false', 'fail-on-kev');
 
@@ -56,15 +66,20 @@ export function validateInputs(): ActionInputs {
 
   // Ignore file
   const ignoreFileRaw = core.getInput('ignore-file');
-  const ignoreFilePath = ignoreFileRaw === '' ? undefined : (ignoreFileRaw || '.geekwala-ignore.yml');
+  const ignoreFilePath = ignoreFileRaw === '' ? undefined : ignoreFileRaw || '.geekwala-ignore.yml';
   const ignoreFile = ignoreFilePath ? validateFilePath(ignoreFilePath, 'ignore-file') : undefined;
 
   // Output format
   const outputFormatRaw = core.getInput('output-format') || 'summary';
-  const outputFormat = outputFormatRaw.split(',').map(f => f.trim()).filter(Boolean);
+  const outputFormat = outputFormatRaw
+    .split(',')
+    .map(f => f.trim())
+    .filter(Boolean);
   for (const fmt of outputFormat) {
     if (!['summary', 'json', 'table'].includes(fmt)) {
-      throw new InputValidationError(`Invalid output-format: ${fmt}. Valid values: summary, json, table`);
+      throw new InputValidationError(
+        `Invalid output-format: ${fmt}. Valid values: summary, json, table`
+      );
     }
   }
 
@@ -188,7 +203,10 @@ function parsePositiveInteger(value: string, inputName: string): number {
 export function validateFilePath(filePath: string, inputName: string): string {
   const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
   const resolved = path.resolve(workspace, filePath);
-  if (!resolved.startsWith(path.resolve(workspace) + path.sep) && resolved !== path.resolve(workspace)) {
+  if (
+    !resolved.startsWith(path.resolve(workspace) + path.sep) &&
+    resolved !== path.resolve(workspace)
+  ) {
     throw new InputValidationError(
       `${inputName} must be within the workspace directory. Got: ${filePath}`
     );

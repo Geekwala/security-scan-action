@@ -30,7 +30,11 @@ export async function loadIgnoreFile(filePath: string): Promise<IgnoreConfig | n
 
     const entries: IgnoreEntry[] = [];
     for (const entry of parsed.ignore) {
-      if (typeof entry === 'object' && entry !== null && typeof (entry as Record<string, unknown>).id === 'string') {
+      if (
+        typeof entry === 'object' &&
+        entry !== null &&
+        typeof (entry as Record<string, unknown>).id === 'string'
+      ) {
         const e = entry as Record<string, unknown>;
         entries.push({
           id: String(e.id),
@@ -59,7 +63,9 @@ export function filterExpiredEntries(config: IgnoreConfig): IgnoreConfig {
       if (!entry.expires) return true;
       const expiryDate = new Date(entry.expires);
       if (isNaN(expiryDate.getTime())) {
-        core.warning(`Invalid expiry date "${entry.expires}" for ignore entry ${entry.id}, treating as expired (fail-safe)`);
+        core.warning(
+          `Invalid expiry date "${entry.expires}" for ignore entry ${entry.id}, treating as expired (fail-safe)`
+        );
         return false;
       }
       return expiryDate > now;

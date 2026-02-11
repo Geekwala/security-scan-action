@@ -77,7 +77,9 @@ export function generateJsonReport(
     ...(scanDurationMs != null ? { scanDurationMs } : {}),
     tool: 'geekwala-security-scan-action',
     fileScanned: fileName,
-    summary: response.data ? recomputeSummary(response.data.results) : { total_packages: 0, vulnerable_packages: 0, safe_packages: 0 },
+    summary: response.data
+      ? recomputeSummary(response.data.results)
+      : { total_packages: 0, vulnerable_packages: 0, safe_packages: 0 },
     vulnerabilities,
     ignoredCount,
   };

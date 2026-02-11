@@ -9,7 +9,9 @@ import { getVulnerabilitySeverity } from '../utils/severity';
 /**
  * Sort vulnerabilities by risk: KEV first, then EPSS desc, then CVSS desc
  */
-function sortByRisk(vulns: Array<{ vuln: Vulnerability; pkg: string; version: string; ecosystem: string }>): typeof vulns {
+function sortByRisk(
+  vulns: Array<{ vuln: Vulnerability; pkg: string; version: string; ecosystem: string }>
+): typeof vulns {
   return [...vulns].sort((a, b) => {
     // KEV first
     const aKev = a.vuln.is_known_exploited ? 1 : 0;
@@ -34,7 +36,8 @@ function sortByRisk(vulns: Array<{ vuln: Vulnerability; pkg: string; version: st
 export function generateTableOutput(response: ApiResponse): void {
   if (!response.success || !response.data) return;
 
-  const allVulns: Array<{ vuln: Vulnerability; pkg: string; version: string; ecosystem: string }> = [];
+  const allVulns: Array<{ vuln: Vulnerability; pkg: string; version: string; ecosystem: string }> =
+    [];
 
   for (const result of response.data.results) {
     if (!result.affected || !result.vulnerabilities?.length) continue;
@@ -68,12 +71,18 @@ export function generateTableOutput(response: ApiResponse): void {
   };
 
   const header =
-    'Package'.padEnd(cols.pkg) + '  ' +
-    'Version'.padEnd(cols.ver) + '  ' +
-    'Vulnerability'.padEnd(cols.id) + '  ' +
-    'Severity'.padEnd(cols.sev) + '  ' +
-    'EPSS'.padEnd(cols.epss) + '  ' +
-    'KEV'.padEnd(cols.kev) + '  ' +
+    'Package'.padEnd(cols.pkg) +
+    '  ' +
+    'Version'.padEnd(cols.ver) +
+    '  ' +
+    'Vulnerability'.padEnd(cols.id) +
+    '  ' +
+    'Severity'.padEnd(cols.sev) +
+    '  ' +
+    'EPSS'.padEnd(cols.epss) +
+    '  ' +
+    'KEV'.padEnd(cols.kev) +
+    '  ' +
     'Fix';
 
   const separator = '\u2500'.repeat(header.length);
@@ -84,19 +93,24 @@ export function generateTableOutput(response: ApiResponse): void {
 
   for (const entry of sorted) {
     const severity = getVulnerabilitySeverity(entry.vuln);
-    const epss = entry.vuln.epss_score != null
-      ? `${(entry.vuln.epss_score * 100).toFixed(1)}%`
-      : '-';
+    const epss =
+      entry.vuln.epss_score != null ? `${(entry.vuln.epss_score * 100).toFixed(1)}%` : '-';
     const kev = entry.vuln.is_known_exploited ? 'YES' : '-';
     const fix = entry.vuln.fix_version || '-';
 
     const line =
-      entry.pkg.padEnd(cols.pkg) + '  ' +
-      entry.version.padEnd(cols.ver) + '  ' +
-      entry.vuln.id.padEnd(cols.id) + '  ' +
-      severity.padEnd(cols.sev) + '  ' +
-      epss.padEnd(cols.epss) + '  ' +
-      kev.padEnd(cols.kev) + '  ' +
+      entry.pkg.padEnd(cols.pkg) +
+      '  ' +
+      entry.version.padEnd(cols.ver) +
+      '  ' +
+      entry.vuln.id.padEnd(cols.id) +
+      '  ' +
+      severity.padEnd(cols.sev) +
+      '  ' +
+      epss.padEnd(cols.epss) +
+      '  ' +
+      kev.padEnd(cols.kev) +
+      '  ' +
       fix;
 
     core.info(line);

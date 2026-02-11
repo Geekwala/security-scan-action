@@ -112,9 +112,7 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
 
         // Fix version remediation guidance
         if (vuln.fix_version) {
-          core.summary
-            .addRaw(`**Fix available:** Upgrade to \`${vuln.fix_version}\``)
-            .addBreak();
+          core.summary.addRaw(`**Fix available:** Upgrade to \`${vuln.fix_version}\``).addBreak();
         }
 
         core.summary.addBreak();
@@ -123,16 +121,18 @@ export async function generateSummary(response: ApiResponse, fileName: string): 
       core.summary.addBreak();
     }
     if (ignoredCount > 0) {
-      core.summary.addRaw(
-        `*${ignoredCount} ignored ${pluralizeVulnerabilities(ignoredCount)} not shown above.*`
-      ).addBreak();
+      core.summary
+        .addRaw(
+          `*${ignoredCount} ignored ${pluralizeVulnerabilities(ignoredCount)} not shown above.*`
+        )
+        .addBreak();
     }
   } else {
     core.summary.addRaw('✅ No vulnerabilities detected in scanned packages.').addBreak();
     if (ignoredCount > 0) {
-      core.summary.addRaw(
-        `*${ignoredCount} ${pluralizeVulnerabilities(ignoredCount)} ignored.*`
-      ).addBreak();
+      core.summary
+        .addRaw(`*${ignoredCount} ${pluralizeVulnerabilities(ignoredCount)} ignored.*`)
+        .addBreak();
     }
   }
 

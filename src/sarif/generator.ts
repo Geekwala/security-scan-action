@@ -31,11 +31,16 @@ function severityToScore(vuln: Vulnerability): string {
   if (vuln.cvss_score != null) return vuln.cvss_score.toFixed(1);
   const severity = getVulnerabilitySeverity(vuln);
   switch (severity) {
-    case 'CRITICAL': return '9.0';
-    case 'HIGH': return '7.0';
-    case 'MEDIUM': return '4.0';
-    case 'LOW': return '1.0';
-    default: return '0.0';
+    case 'CRITICAL':
+      return '9.0';
+    case 'HIGH':
+      return '7.0';
+    case 'MEDIUM':
+      return '4.0';
+    case 'LOW':
+      return '1.0';
+    default:
+      return '0.0';
   }
 }
 
@@ -96,7 +101,8 @@ export function generateSarif(response: ApiResponse, fileName: string): SarifLog
         const properties: Record<string, unknown> = {};
         if (vuln.epss_score != null) properties['geekwala/epss-score'] = vuln.epss_score;
         // Keep 'geekwala/is-kev' property name for backward compatibility with existing SARIF consumers
-        if (vuln.is_known_exploited != null) properties['geekwala/is-kev'] = vuln.is_known_exploited;
+        if (vuln.is_known_exploited != null)
+          properties['geekwala/is-kev'] = vuln.is_known_exploited;
         if (vuln.fix_version != null) properties['geekwala/fix-version'] = vuln.fix_version;
 
         results.push({
@@ -123,7 +129,8 @@ export function generateSarif(response: ApiResponse, fileName: string): SarifLog
   }
 
   return {
-    $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json',
+    $schema:
+      'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json',
     version: '2.1.0',
     runs: [
       {

@@ -78,15 +78,27 @@ export class GeekWalaClient {
    */
   private validateResponse(data: unknown): ApiResponse {
     if (typeof data !== 'object' || data === null) {
-      throw new GeekWalaApiError('Invalid API response: expected JSON object', undefined, 'parse_error');
+      throw new GeekWalaApiError(
+        'Invalid API response: expected JSON object',
+        undefined,
+        'parse_error'
+      );
     }
     const resp = data as ApiResponse;
     if (resp.success && resp.data) {
       if (!resp.data.summary || typeof resp.data.summary.total_packages !== 'number') {
-        throw new GeekWalaApiError('Invalid API response: missing or malformed summary', undefined, 'parse_error');
+        throw new GeekWalaApiError(
+          'Invalid API response: missing or malformed summary',
+          undefined,
+          'parse_error'
+        );
       }
       if (!Array.isArray(resp.data.results)) {
-        throw new GeekWalaApiError('Invalid API response: missing results array', undefined, 'parse_error');
+        throw new GeekWalaApiError(
+          'Invalid API response: missing results array',
+          undefined,
+          'parse_error'
+        );
       }
     }
     return resp;
@@ -116,9 +128,8 @@ export class GeekWalaClient {
 
     const status = error.response.status;
     const rawData = error.response.data;
-    const data = (typeof rawData === 'object' && rawData !== null)
-      ? rawData as Record<string, unknown>
-      : {};
+    const data =
+      typeof rawData === 'object' && rawData !== null ? (rawData as Record<string, unknown>) : {};
 
     switch (status) {
       case 401:
