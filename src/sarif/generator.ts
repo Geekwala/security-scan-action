@@ -95,6 +95,7 @@ export function generateSarif(response: ApiResponse, fileName: string): SarifLog
         // Build properties bag with enrichment data
         const properties: Record<string, unknown> = {};
         if (vuln.epss_score != null) properties['geekwala/epss-score'] = vuln.epss_score;
+        // Keep 'geekwala/is-kev' property name for backward compatibility with existing SARIF consumers
         if (vuln.is_known_exploited != null) properties['geekwala/is-kev'] = vuln.is_known_exploited;
         if (vuln.fix_version != null) properties['geekwala/fix-version'] = vuln.fix_version;
 

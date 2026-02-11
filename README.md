@@ -211,20 +211,20 @@ jobs:
 ## Getting an API Token
 
 1. Sign up at [geekwala.com](https://geekwala.com)
-2. Navigate to [Dashboard > API Tokens](https://geekwala.com/dashboard/tokens)
+2. Navigate to [Developers > API Tokens](https://geekwala.com/developers/api-tokens)
 3. Create a new token with `scan:write` ability
 4. Add the token to your repository secrets as `GEEKWALA_API_TOKEN`
 
 ## Troubleshooting
 
 ### Authentication Failed
-Verify your token at https://geekwala.com/dashboard/tokens and ensure it has `scan:write` permission.
+Verify your token at https://geekwala.com/developers/api-tokens and ensure it has `scan:write` permission.
 
 ### No Dependency File Found
 Ensure your repository contains a supported dependency file, or use the `file-path` input to specify it.
 
 ### File Size Exceeded
-The file size limit is 500KB for authenticated users. For large lockfiles, consider scanning the manifest instead.
+The file size limit is 512KB for authenticated users. For large lockfiles, consider scanning the manifest instead.
 
 ### Rate Limit Exceeded
 The rate limit is 50 scans/hour. Space out your scans or use conditional execution (`if: github.event_name == 'pull_request'`). [Upgrade to Pro](https://geekwala.com/pricing) for unlimited monthly scans.

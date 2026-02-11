@@ -94,7 +94,7 @@ export async function validateFile(filePath: string): Promise<void> {
 /**
  * Read file content with size guard to prevent OOM on large files
  */
-export async function readFile(filePath: string, maxSizeBytes = 500 * 1024): Promise<string> {
+export async function readFile(filePath: string, maxSizeBytes = 512 * 1024): Promise<string> {
   try {
     const stats = await fs.stat(filePath);
     if (stats.size > maxSizeBytes) {
