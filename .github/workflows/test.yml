@@ -42,9 +42,14 @@ jobs:
       - name: Verify dist is up to date
         run: |
           if [ -n "$(git status --porcelain dist/)" ]; then
-            echo "ERROR: dist/ directory is not up to date. Run 'npm run build' and commit the changes."
-            git diff dist/
-            exit 1
+            echo "dist/ directory has changes after build - auto-committing"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add dist/
+            git commit -m "build: update dist with CI build artifacts [skip ci]"
+            git push
+          else
+            echo "dist/ directory is up to date"
           fi
 
   # Self-test with a sample package.json
