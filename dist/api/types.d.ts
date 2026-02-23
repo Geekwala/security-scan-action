@@ -17,7 +17,7 @@ export interface Vulnerability {
         type: string;
         url: string;
     }>;
-    severity?: VulnerabilitySeverity[];
+    severity?: string | VulnerabilitySeverity[];
     epss_score?: number | null;
     epss_percentile?: number | null;
     is_known_exploited?: boolean;

@@ -91,6 +91,23 @@ describe('Severity Classification', () => {
       expect(getVulnerabilitySeverity(vuln)).toBe('HIGH');
     });
 
+    it('should handle string severity from GeekWala API', () => {
+      expect(getVulnerabilitySeverity({ id: 'CVE-1', severity: 'HIGH' })).toBe('HIGH');
+      expect(getVulnerabilitySeverity({ id: 'CVE-2', severity: 'MODERATE' })).toBe('MEDIUM');
+      expect(getVulnerabilitySeverity({ id: 'CVE-3', severity: 'CRITICAL' })).toBe('CRITICAL');
+      expect(getVulnerabilitySeverity({ id: 'CVE-4', severity: 'LOW' })).toBe('LOW');
+    });
+
+    it('should prefer CVSS score over string severity', () => {
+      const vuln: Vulnerability = {
+        id: 'CVE-2021-1234',
+        cvss_score: 9.8,
+        severity: 'LOW',
+      };
+
+      expect(getVulnerabilitySeverity(vuln)).toBe('CRITICAL');
+    });
+
     it('should fall back to CVSS_V2 numeric score when CVSS_V3 is a vector string', () => {
       const vuln: Vulnerability = {
         id: 'CVE-2021-9999',
@@ -130,6 +147,23 @@ describe('Severity Classification', () => {
       expect(counts.high).toBe(0);
       expect(counts.medium).toBe(0);
       expect(counts.low).toBe(0);
+      expect(counts.unknown).toBe(0);
+    });
+
+    it('should count string severity from GeekWala API', () => {
+      const vulnerabilities: Vulnerability[] = [
+        { id: 'V1', severity: 'CRITICAL' },
+        { id: 'V2', severity: 'HIGH' },
+        { id: 'V3', severity: 'MODERATE' },
+        { id: 'V4', severity: 'LOW' },
+      ];
+
+      const counts = countBySeverity(vulnerabilities);
+
+      expect(counts.critical).toBe(1);
+      expect(counts.high).toBe(1);
+      expect(counts.medium).toBe(1);
+      expect(counts.low).toBe(1);
       expect(counts.unknown).toBe(0);
     });
   });

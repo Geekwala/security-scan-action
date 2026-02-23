@@ -39,8 +39,13 @@ export function getVulnerabilitySeverity(vuln: Vulnerability): string {
     return getSeverityFromCvss(vuln.cvss_score);
   }
 
-  // Parse severity array — try all entries for a numeric score
-  if (vuln.severity && vuln.severity.length > 0) {
+  // GeekWala API returns severity as a plain string (e.g. "MODERATE", "HIGH")
+  if (typeof vuln.severity === 'string') {
+    return normalizeSeverity(vuln.severity);
+  }
+
+  // OSV raw format: severity is an array of {type, score} objects
+  if (Array.isArray(vuln.severity) && vuln.severity.length > 0) {
     for (const entry of vuln.severity) {
       const score = parseFloat(entry.score);
       if (!isNaN(score)) {
