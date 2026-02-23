@@ -44,7 +44,7 @@ GitHub Action to scan your dependencies for known vulnerabilities using the [Gee
 | `json-file` | Path to save JSON report | No | Disabled |
 | `fail-on-critical` | *(Legacy)* Fail on critical vulns. Use `severity-threshold` instead. | No | `true` |
 | `fail-on-high` | *(Legacy)* Fail on high vulns. Use `severity-threshold` instead. | No | `false` |
-| `api-base-url` | GeekWala API base URL | No | `https://geekwala.com` |
+| `api-base-url` | GeekWala API base URL | No | `https://www.geekwala.com` |
 | `retry-attempts` | Number of retry attempts for transient failures | No | `3` |
 | `timeout-seconds` | Request timeout in seconds | No | `300` |
 

@@ -52,7 +52,7 @@ inputs:
   api-base-url:
     description: 'GeekWala API base URL'
     required: false
-    default: 'https://geekwala.com'
+    default: 'https://www.geekwala.com'
   retry-attempts:
     description: 'Number of retry attempts for transient failures'
     required: false

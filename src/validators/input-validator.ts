@@ -86,7 +86,7 @@ export function validateInputs(): ActionInputs {
   const jsonFileRaw = core.getInput('json-file') || undefined;
   const jsonFile = jsonFileRaw ? validateFilePath(jsonFileRaw, 'json-file') : undefined;
 
-  const apiBaseUrl = core.getInput('api-base-url') || 'https://geekwala.com';
+  const apiBaseUrl = core.getInput('api-base-url') || 'https://www.geekwala.com';
   if (!isValidUrl(apiBaseUrl)) {
     throw new InputValidationError(`Invalid api-base-url: ${apiBaseUrl}`);
   }
