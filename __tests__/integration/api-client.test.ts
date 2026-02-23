@@ -16,7 +16,6 @@ describe('GeekWalaClient Integration', () => {
   // Clean up nock before each test to ensure clean state
   beforeEach(() => {
     nock.cleanAll();
-    nock.disableNetConnect();
   });
 
   // Clean up nock after each test to prevent interference
