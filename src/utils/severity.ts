@@ -34,14 +34,15 @@ export function getSeverityFromCvss(score: number): string {
  * Extract highest severity from vulnerability data
  */
 export function getVulnerabilitySeverity(vuln: Vulnerability): string {
-  // Use CVSS score if available
-  if (vuln.cvss_score != null) {
-    return getSeverityFromCvss(vuln.cvss_score);
-  }
-
   // GeekWala API returns severity as a plain string (e.g. "MODERATE", "HIGH")
+  // This is the most reliable source — prefer it over enriched CVSS scores
   if (typeof vuln.severity === 'string') {
     return normalizeSeverity(vuln.severity);
+  }
+
+  // Fall back to CVSS score when no string severity is available
+  if (vuln.cvss_score != null) {
+    return getSeverityFromCvss(vuln.cvss_score);
   }
 
   // OSV raw format: severity is an array of {type, score} objects

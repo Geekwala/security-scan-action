@@ -98,14 +98,14 @@ describe('Severity Classification', () => {
       expect(getVulnerabilitySeverity({ id: 'CVE-4', severity: 'LOW' })).toBe('LOW');
     });
 
-    it('should prefer CVSS score over string severity', () => {
+    it('should prefer string severity over CVSS score', () => {
       const vuln: Vulnerability = {
         id: 'CVE-2021-1234',
         cvss_score: 9.8,
         severity: 'LOW',
       };
 
-      expect(getVulnerabilitySeverity(vuln)).toBe('CRITICAL');
+      expect(getVulnerabilitySeverity(vuln)).toBe('LOW');
     });
 
     it('should fall back to CVSS_V2 numeric score when CVSS_V3 is a vector string', () => {
