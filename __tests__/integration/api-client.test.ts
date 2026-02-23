@@ -299,6 +299,9 @@ describe('GeekWalaClient Integration', () => {
     });
 
     it('should accept files under 512KB', async () => {
+      // Allow time for previous test's HTTP connections to settle
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       const mockApi = new MockGeekWalaApi(TEST_BASE_URL);
       mockApi.mockSuccessfulScan(fixtures.cleanScanResponse);
 
