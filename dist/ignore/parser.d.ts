@@ -1,6 +1,3 @@
-/**
- * YAML ignore file parser
- */
 export interface IgnoreEntry {
     id: string;
     reason: string;

@@ -17,6 +17,14 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true
+      }
+    }
+  },
   verbose: true,
   testTimeout: 5000
 };
