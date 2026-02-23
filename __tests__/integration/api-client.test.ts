@@ -285,6 +285,13 @@ describe('GeekWalaClient Integration', () => {
   });
 
   describe('File Size Validation', () => {
+    // Aggressively clean nock before this describe block to ensure no pollution
+    beforeAll(() => {
+      nock.cleanAll();
+      nock.disableNetConnect();
+      nock.enableNetConnect('127.0.0.1');
+    });
+
     it('should reject files exceeding 512KB', async () => {
       const client = new GeekWalaClient(TEST_TOKEN, TEST_BASE_URL, 300, 3);
 
@@ -299,11 +306,6 @@ describe('GeekWalaClient Integration', () => {
     });
 
     it('should accept files under 512KB', async () => {
-      // Reset nock and re-enable intercepts for this test to avoid flakiness
-      nock.cleanAll();
-      nock.disableNetConnect();
-      nock.enableNetConnect('127.0.0.1');
-
       const mockApi = new MockGeekWalaApi(TEST_BASE_URL);
       mockApi.mockSuccessfulScan(fixtures.cleanScanResponse);
 
