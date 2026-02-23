@@ -1,1 +1,1 @@
-{"version":3,"file":"error-handler.d.ts","sourceRoot":"","sources":["file:///Users/sood/dev/heatware/security-scan-action/src/utils/error-handler.ts"],"names":[],"mappings":"AAAA;;GAEG;AAMH;;GAEG;AACH,wBAAgB,WAAW,CAAC,KAAK,EAAE,OAAO,GAAG,IAAI,CA+BhD"}
+{"version":3,"file":"error-handler.d.ts","sourceRoot":"","sources":["file:///home/runner/work/security-scan-action/security-scan-action/src/utils/error-handler.ts"],"names":[],"mappings":"AAAA;;GAEG;AAMH;;GAEG;AACH,wBAAgB,WAAW,CAAC,KAAK,EAAE,OAAO,GAAG,IAAI,CA+BhD"}
