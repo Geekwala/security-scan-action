@@ -13,16 +13,6 @@ describe('GeekWalaClient Integration', () => {
   const TEST_TOKEN = 'test-api-token-12345';
   const TEST_BASE_URL = 'https://geekwala.com';
 
-  // Clean up nock before each test to ensure clean state
-  beforeEach(() => {
-    nock.cleanAll();
-  });
-
-  // Clean up nock after each test to prevent interference
-  afterEach(() => {
-    nock.cleanAll();
-  });
-
   describe('Successful Scans', () => {
     it('should return results for clean scan with no vulnerabilities', async () => {
       const mockApi = new MockGeekWalaApi(TEST_BASE_URL);
